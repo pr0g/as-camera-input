@@ -13,7 +13,8 @@ FetchContent_Declare(
     GIT_TAG        origin/main)
 FetchContent_Declare(
     cmake-helpers
-    SOURCE_DIR /Users/tomhultonharrop/Documents/Projects/cmake-helpers)
+    GIT_REPOSITORY https://github.com/pr0g/cmake-helpers.git
+    GIT_TAG        origin/main)
 
 FetchContent_MakeAvailable(as-camera bec cmake-helpers)
     
