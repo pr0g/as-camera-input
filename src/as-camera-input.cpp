@@ -1,4 +1,5 @@
 #include "as-camera-input/as-camera-input.hpp"
+
 #include "bec/bitfield-enum-class.hpp"
 
 template<>
@@ -144,8 +145,8 @@ asc::Camera RotateCameraInput::stepCamera(
 
   asc::Camera next_camera = target_camera;
 
-  next_camera.pitch += as::real(mouse_delta[1]) * 0.005_r;
-  next_camera.yaw += as::real(mouse_delta[0]) * 0.005_r;
+  next_camera.pitch += as::real(mouse_delta[1]) * props_.rotate_speed_;
+  next_camera.yaw += as::real(mouse_delta[0]) * props_.rotate_speed_;
 
   auto clamp_rotation = [](const as::real angle) {
     return std::fmod(angle + as::k_tau, as::k_tau);
@@ -185,12 +186,17 @@ asc::Camera PanCameraInput::stepCamera(
   const auto pan_axes = panAxesFn_(next_camera);
 
   const auto delta_pan_x = as::real(mouse_delta.x) * pan_axes.horizontal_axis_
-                         * 0.01_r /** props.pan_speed*/;
+                         * props_.pan_speed_;
   const auto delta_pan_y = as::real(mouse_delta.y) * pan_axes.vertical_axis_
-                         * 0.01_r /** props.pan_speed*/;
+                         * props_.pan_speed_;
 
-  next_camera.look_at += delta_pan_x * /*props.pan_invert_x*/ -1.0_r;
-  next_camera.look_at += delta_pan_y /*props.pan_invert_y*/;
+  const auto inv = [](bool invert) {
+    constexpr as::real dir[] = {1.0_r, -1.0_r};
+    return dir[static_cast<int>(invert)];
+  };
+
+  next_camera.look_at += delta_pan_x * inv(props_.pan_invert_x_);
+  next_camera.look_at += delta_pan_y * -inv(props_.pan_invert_y_);
 
   return next_camera;
 }
@@ -258,39 +264,32 @@ asc::Camera TranslateCameraInput::stepCamera(
   using as::operator""_r;
   using bec::operator&;
 
-  const as::real speed = [boost = boost_]() {
-    as::real speed = 10.0_r;
-    return speed * (boost ? /*speed multiplier*/ 3.0_r : 1.0_r);
+  const as::real speed = [boost = boost_, props = props_]() {
+    return props.translate_speed_ * (boost ? props.boost_multiplier_ : 1.0_r);
   }();
 
   if ((translation_ & TranslationType::Forward) == TranslationType::Forward) {
-    next_camera.look_at +=
-      axis_z * speed * /*props.translate_speed*/ delta_time;
+    next_camera.look_at += axis_z * speed * delta_time;
   }
 
   if ((translation_ & TranslationType::Backward) == TranslationType::Backward) {
-    next_camera.look_at -=
-      axis_z * speed * /*props.translate_speed*/ delta_time;
+    next_camera.look_at -= axis_z * speed * delta_time;
   }
 
   if ((translation_ & TranslationType::Left) == TranslationType::Left) {
-    next_camera.look_at -=
-      axis_x * speed * /*props.translate_speed* */ delta_time;
+    next_camera.look_at -= axis_x * speed * delta_time;
   }
 
   if ((translation_ & TranslationType::Right) == TranslationType::Right) {
-    next_camera.look_at +=
-      axis_x * speed * /*props.translate_speed* */ delta_time;
+    next_camera.look_at += axis_x * speed * delta_time;
   }
 
   if ((translation_ & TranslationType::Up) == TranslationType::Up) {
-    next_camera.look_at +=
-      axis_y * speed * /*props.translate_speed* */ delta_time;
+    next_camera.look_at += axis_y * speed * delta_time;
   }
 
   if ((translation_ & TranslationType::Down) == TranslationType::Down) {
-    next_camera.look_at -=
-      axis_y * speed * /*props.translate_speed* */ delta_time;
+    next_camera.look_at -= axis_y * speed * delta_time;
   }
 
   if (ending()) {
@@ -341,8 +340,6 @@ asc::Camera OrbitCameraInput::stepCamera(
 
   asc::Camera next_camera = target_camera;
 
-  const as::real default_orbit_distance = 15.0_r;
-  const as::real orbit_max_distance = 100.0_r;
   if (beginning()) {
     as::real hit_distance = intersectPlane(
       target_camera.transform().translation,
@@ -350,16 +347,16 @@ asc::Camera OrbitCameraInput::stepCamera(
       as::vec4(as::vec3::axis_y()));
 
     if (hit_distance >= 0.0_r) {
-      const as::real dist = std::min(hit_distance, orbit_max_distance);
+      const as::real dist = std::min(hit_distance, props_.max_orbit_distance_);
       next_camera.look_dist = -dist;
       next_camera.look_at =
         target_camera.transform().translation
         + as::mat3_basis_z(target_camera.transform().rotation) * dist;
     } else {
-      next_camera.look_dist = -default_orbit_distance;
+      next_camera.look_dist = -props_.default_orbit_distance_;
       next_camera.look_at = target_camera.transform().translation
                           + as::mat3_basis_z(target_camera.transform().rotation)
-                              * default_orbit_distance;
+                              * props_.default_orbit_distance_;
     }
   }
 
@@ -394,8 +391,7 @@ asc::Camera OrbitDollyMouseWheelCameraInput::stepCamera(
 
   asc::Camera next_camera = target_camera;
   next_camera.look_dist = as::min(
-    next_camera.look_dist + as::real(wheel_delta) * 0.2f /*props.dolly_speed*/,
-    0.0_r);
+    next_camera.look_dist + as::real(wheel_delta) * props_.dolly_speed_, 0.0_r);
   endActivation();
   return next_camera;
 }
@@ -420,7 +416,7 @@ asc::Camera OrbitDollyMouseMoveCameraInput::stepCamera(
   using as::operator""_r;
   asc::Camera next_camera = target_camera;
   next_camera.look_dist = as::min(
-    next_camera.look_dist + as::real(mouse_delta.y) * 0.1_r /*props.pan_speed*/,
+    next_camera.look_dist + as::real(mouse_delta.y) * props_.dolly_speed_,
     0.0_r);
   return next_camera;
 }
@@ -443,7 +439,8 @@ asc::Camera WheelTranslationCameraInput::stepCamera(
   const auto translation_basis = lookTranslation(next_camera);
   const auto axis_z = as::mat3_basis_z(translation_basis);
 
-  next_camera.look_at += axis_z * as::real(wheel_delta) * 0.2_r;
+  next_camera.look_at += axis_z * as::real(wheel_delta)
+    * props_.translate_speed_;
 
   endActivation();
 
@@ -452,7 +449,7 @@ asc::Camera WheelTranslationCameraInput::stepCamera(
 
 asc::Camera smoothCamera(
   const asc::Camera& current_camera, const asc::Camera& target_camera,
-  const as::real delta_time)
+  const SmoothProps& props, const as::real delta_time)
 {
   using as::operator""_r;
 
@@ -472,11 +469,11 @@ asc::Camera smoothCamera(
 
   asc::Camera camera;
   // https://www.gamasutra.com/blogs/ScottLembcke/20180404/316046/Improved_Lerp_Smoothing.php
-  const as::real look_rate = exp2(/*props.look_smoothness*/ 5.0_r);
+  const as::real look_rate = exp2(props.look_smoothness_);
   const as::real look_t = exp2(-look_rate * delta_time);
   camera.pitch = as::mix(target_camera.pitch, current_camera.pitch, look_t);
   camera.yaw = as::mix(target_yaw, current_yaw, look_t);
-  const as::real move_rate = exp2(/*props.move_smoothness*/ 5.0_r);
+  const as::real move_rate = exp2(props.move_smoothness_);
   const as::real move_t = exp2(-move_rate * delta_time);
   camera.look_dist =
     as::mix(target_camera.look_dist, current_camera.look_dist, move_t);

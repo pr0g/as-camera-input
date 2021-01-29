@@ -129,9 +129,15 @@ private:
   Activation activation_;
 };
 
+struct SmoothProps
+{
+  as::real look_smoothness_ = static_cast<as::real>(5.0);
+  as::real move_smoothness_ = static_cast<as::real>(5.0);
+};
+
 asc::Camera smoothCamera(
   const asc::Camera& current_camera, const asc::Camera& target_camera,
-  as::real delta_time);
+  const SmoothProps& props, as::real delta_time);
 
 class Cameras
 {
@@ -173,6 +179,11 @@ public:
     int32_t wheel_delta, as::real delta_time) override;
 
   MouseButton button_type_;
+
+  struct Props
+  {
+    as::real rotate_speed_ = static_cast<as::real>(0.005);
+  } props_;
 };
 
 struct PanAxes
@@ -213,6 +224,13 @@ public:
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
     int32_t wheel_delta, as::real delta_time) override;
+
+  struct Props
+  {
+    as::real pan_speed_ = static_cast<as::real>(0.01);
+    bool pan_invert_x_ = true;
+    bool pan_invert_y_ = true;
+  } props_;
 
 private:
   PanAxesFn panAxesFn_;
@@ -258,6 +276,12 @@ public:
     int32_t wheel_delta, as::real delta_time) override;
   void resetImpl() override;
 
+  struct Props
+  {
+    as::real translate_speed_ = static_cast<as::real>(10.0);
+    as::real boost_multiplier_ = static_cast<as::real>(3.0);
+  } props_;
+
 private:
   enum class TranslationType
   {
@@ -286,6 +310,11 @@ public:
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
     int32_t wheel_delta, as::real delta_time) override;
+  
+  struct Props 
+  {
+    as::real dolly_speed_ = static_cast<as::real>(0.2);
+  } props_;
 };
 
 class OrbitDollyMouseMoveCameraInput : public CameraInput
@@ -295,6 +324,11 @@ public:
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
     int32_t wheel_delta, as::real delta_time) override;
+  
+  struct Props 
+  {
+    as::real dolly_speed_ = static_cast<as::real>(0.1);
+  } props_;
 };
 
 class WheelTranslationCameraInput : public CameraInput
@@ -304,6 +338,11 @@ public:
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
     int32_t wheel_delta, as::real delta_time) override;
+
+  struct Props 
+  {
+    as::real translate_speed_ = static_cast<as::real>(0.2);
+  } props_;
 };
 
 class OrbitCameraInput : public CameraInput
@@ -316,6 +355,12 @@ public:
   bool exclusive() const override { return true; }
 
   Cameras orbit_cameras_;
+
+  struct Props
+  {
+    as::real default_orbit_distance_ = static_cast<as::real>(15.0);
+    as::real max_orbit_distance_ = static_cast<as::real>(100.0);
+  } props_;
 };
 
 } // namespace asci
