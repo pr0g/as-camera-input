@@ -24,7 +24,7 @@ struct MouseWheelEvent
 
 enum class MouseButton
 {
-  None,
+  Nil,
   Left,
   Right,
   Middle
@@ -61,7 +61,7 @@ enum class KeyboardButton
   LAlt,
   LShift,
   Ctrl,
-  None
+  Nil
 };
 
 enum class ButtonAction
@@ -286,7 +286,7 @@ private:
   enum class TranslationType
   {
     // clang-format off
-    None     = 0,
+    Nil     = 0,
     Forward  = 1 << 0,
     Backward = 1 << 1,
     Left     = 1 << 2,
@@ -298,7 +298,7 @@ private:
 
   static TranslationType translationFromKey(KeyboardButton button);
 
-  TranslationType translation_ = TranslationType::None;
+  TranslationType translation_ = TranslationType::Nil;
   TranslationAxesFn translationAxesFn_;
   bool boost_ = false;
 };
