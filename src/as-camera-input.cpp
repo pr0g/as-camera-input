@@ -190,10 +190,10 @@ asc::Camera PanCameraInput::stepCamera(
 
   const auto pan_axes = panAxesFn_(next_camera);
 
-  const auto delta_pan_x = as::real(mouse_delta.x) * pan_axes.horizontal_axis_
-                         * props_.pan_speed_;
-  const auto delta_pan_y = as::real(mouse_delta.y) * pan_axes.vertical_axis_
-                         * props_.pan_speed_;
+  const auto delta_pan_x =
+    as::real(mouse_delta.x) * pan_axes.horizontal_axis_ * props_.pan_speed_;
+  const auto delta_pan_y =
+    as::real(mouse_delta.y) * pan_axes.vertical_axis_ * props_.pan_speed_;
 
   const auto inv = [](bool invert) {
     constexpr as::real dir[] = {1.0_r, -1.0_r};
@@ -444,8 +444,8 @@ asc::Camera WheelTranslationCameraInput::stepCamera(
   const auto translation_basis = lookTranslation(next_camera);
   const auto axis_z = as::mat3_basis_z(translation_basis);
 
-  next_camera.look_at += axis_z * as::real(wheel_delta)
-    * props_.translate_speed_;
+  next_camera.look_at +=
+    axis_z * as::real(wheel_delta) * props_.translate_speed_;
 
   endActivation();
 
