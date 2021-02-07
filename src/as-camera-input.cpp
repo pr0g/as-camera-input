@@ -54,6 +54,11 @@ asc::Camera CameraSystem::stepCamera(
   return next_camera;
 }
 
+void Cameras::addCamera(CameraInput* camera_input)
+{
+  idle_camera_inputs_.push_back(camera_input);
+}
+
 void Cameras::handleEvents(const InputEvent& event)
 {
   for (auto* camera_input : active_camera_inputs_) {

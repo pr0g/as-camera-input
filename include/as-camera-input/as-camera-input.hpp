@@ -144,12 +144,14 @@ asc::Camera smoothCamera(
 class Cameras
 {
 public:
+  void addCamera(CameraInput* camera_input);
   void handleEvents(const InputEvent& event);
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
     int32_t wheel_delta, as::real delta_time);
   void reset();
 
+private:
   std::vector<CameraInput*> active_camera_inputs_;
   std::vector<CameraInput*> idle_camera_inputs_;
 };
