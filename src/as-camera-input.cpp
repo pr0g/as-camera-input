@@ -196,8 +196,8 @@ asc::Camera PanCameraInput::stepCamera(
     as::real(mouse_delta.y) * pan_axes.vertical_axis_ * props_.pan_speed_;
 
   const auto inv = [](bool invert) {
-    constexpr as::real dir[] = {1.0_r, -1.0_r};
-    return dir[static_cast<int>(invert)];
+    constexpr as::real Dir[] = {1.0_r, -1.0_r};
+    return Dir[static_cast<int>(invert)];
   };
 
   next_camera.look_at += delta_pan_x * inv(props_.pan_invert_x_);
