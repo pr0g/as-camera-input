@@ -128,7 +128,7 @@ protected:
   virtual void resetImpl() {}
 
 private:
-  Activation activation_;
+  Activation activation_ = Activation::Idle;
 };
 
 struct SmoothProps
