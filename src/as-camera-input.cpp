@@ -444,7 +444,7 @@ asc::Camera smoothCamera(
   const asc::Camera& current_camera, const asc::Camera& target_camera,
   const SmoothProps& props, const as::real delta_time)
 {
-  auto clamp_rotation = [](const as::real angle) {
+  const auto clamp_rotation = [](const as::real angle) {
     return std::fmod(angle + as::k_tau, as::k_tau);
   };
 
@@ -469,7 +469,7 @@ asc::Camera smoothCamera(
   camera.look_dist =
     as::mix(target_camera.look_dist, current_camera.look_dist, move_t);
   camera.look_at =
-    as::vec_mix(target_camera.look_at, current_camera.look_at, move_t);
+    as::mix(target_camera.look_at, current_camera.look_at, move_t);
   return camera;
 }
 
