@@ -146,8 +146,6 @@ asc::Camera RotateCameraInput::stepCamera(
   const asc::Camera& target_camera, const as::vec2i& mouse_delta,
   const int32_t wheel_delta, const as::real delta_time)
 {
-  using as::operator""_r;
-
   asc::Camera next_camera = target_camera;
 
   next_camera.pitch += as::real(mouse_delta[1]) * props_.rotate_speed_;
@@ -182,8 +180,6 @@ asc::Camera PanCameraInput::stepCamera(
   const asc::Camera& target_camera, const as::vec2i& mouse_delta,
   const int32_t wheel_delta, const as::real delta_time)
 {
-  using as::operator""_r;
-
   asc::Camera next_camera = target_camera;
 
   const as::mat3 orientation = next_camera.transform().rotation;
@@ -266,7 +262,6 @@ asc::Camera TranslateCameraInput::stepCamera(
   const auto axis_y = as::mat3_basis_y(translation_basis);
   const auto axis_z = as::mat3_basis_z(translation_basis);
 
-  using as::operator""_r;
   using bec::operator&;
 
   const as::real speed = [boost = boost_, props = props_]() {
@@ -341,8 +336,6 @@ asc::Camera OrbitCameraInput::stepCamera(
   const asc::Camera& target_camera, const as::vec2i& mouse_delta,
   const int32_t wheel_delta, as::real delta_time)
 {
-  using as::operator""_r;
-
   asc::Camera next_camera = target_camera;
 
   if (beginning()) {
@@ -392,8 +385,6 @@ asc::Camera OrbitDollyMouseWheelCameraInput::stepCamera(
   const asc::Camera& target_camera, const as::vec2i& mouse_delta,
   const int32_t wheel_delta, as::real delta_time)
 {
-  using as::operator""_r;
-
   asc::Camera next_camera = target_camera;
   next_camera.look_dist = as::min(
     next_camera.look_dist + as::real(wheel_delta) * props_.dolly_speed_, 0.0_r);
@@ -418,7 +409,6 @@ asc::Camera OrbitDollyMouseMoveCameraInput::stepCamera(
   const asc::Camera& target_camera, const as::vec2i& mouse_delta,
   const int32_t wheel_delta, as::real delta_time)
 {
-  using as::operator""_r;
   asc::Camera next_camera = target_camera;
   next_camera.look_dist = as::min(
     next_camera.look_dist + as::real(mouse_delta.y) * props_.dolly_speed_,
@@ -437,8 +427,6 @@ asc::Camera WheelTranslationCameraInput::stepCamera(
   const asc::Camera& target_camera, const as::vec2i& mouse_delta,
   int32_t wheel_delta, as::real delta_time)
 {
-  using as::operator""_r;
-
   asc::Camera next_camera = target_camera;
 
   const auto translation_basis = lookTranslation(next_camera);
@@ -456,8 +444,6 @@ asc::Camera smoothCamera(
   const asc::Camera& current_camera, const asc::Camera& target_camera,
   const SmoothProps& props, const as::real delta_time)
 {
-  using as::operator""_r;
-
   auto clamp_rotation = [](const as::real angle) {
     return std::fmod(angle + as::k_tau, as::k_tau);
   };
