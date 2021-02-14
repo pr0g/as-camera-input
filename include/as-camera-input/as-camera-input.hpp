@@ -19,7 +19,7 @@ struct MouseMotionEvent
   as::vec2i motion_;
 };
 
-struct MouseWheelEvent
+struct ScrollEvent
 {
   int32_t delta_;
 };
@@ -86,7 +86,7 @@ struct KeyboardButtonEvent
 };
 
 using InputEvent = std::variant<
-  std::monostate, MouseMotionEvent, MouseWheelEvent, MouseButtonEvent,
+  std::monostate, MouseMotionEvent, ScrollEvent, MouseButtonEvent,
   KeyboardButtonEvent>;
 
 class CameraInput
@@ -121,7 +121,7 @@ public:
   virtual void handleEvents(const InputEvent& event) = 0;
   virtual asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
-    int32_t wheel_delta, as::real delta_time) = 0;
+    int32_t scroll_delta, as::real delta_time) = 0;
   virtual bool exclusive() const { return false; }
 
 protected:
@@ -148,7 +148,7 @@ public:
   void handleEvents(const InputEvent& event);
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
-    int32_t wheel_delta, as::real delta_time);
+    int32_t scroll_delta, as::real delta_time);
   void reset();
 
 private:
@@ -165,7 +165,7 @@ public:
   Cameras cameras_;
 
 private:
-  int32_t wheel_delta_ = 0;
+  int32_t scroll_delta_ = 0;
   std::optional<as::vec2i> last_mouse_position_;
   std::optional<as::vec2i> current_mouse_position_;
 };
@@ -180,7 +180,7 @@ public:
   void handleEvents(const InputEvent& event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
-    int32_t wheel_delta, as::real delta_time) override;
+    int32_t scroll_delta, as::real delta_time) override;
 
   MouseButton button_type_;
 
@@ -227,7 +227,7 @@ public:
   void handleEvents(const InputEvent& event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
-    int32_t wheel_delta, as::real delta_time) override;
+    int32_t scroll_delta, as::real delta_time) override;
 
   struct Props
   {
@@ -277,7 +277,7 @@ public:
   void handleEvents(const InputEvent& event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
-    int32_t wheel_delta, as::real delta_time) override;
+    int32_t scroll_delta, as::real delta_time) override;
   void resetImpl() override;
 
   struct Props
@@ -307,13 +307,13 @@ private:
   bool boost_ = false;
 };
 
-class OrbitDollyMouseWheelCameraInput : public CameraInput
+class OrbitDollyScrollCameraInput : public CameraInput
 {
 public:
   void handleEvents(const InputEvent& event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
-    int32_t wheel_delta, as::real delta_time) override;
+    int32_t scroll_delta, as::real delta_time) override;
   
   struct Props 
   {
@@ -327,7 +327,7 @@ public:
   void handleEvents(const InputEvent& event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
-    int32_t wheel_delta, as::real delta_time) override;
+    int32_t scroll_delta, as::real delta_time) override;
   
   struct Props 
   {
@@ -335,13 +335,13 @@ public:
   } props_;
 };
 
-class WheelTranslationCameraInput : public CameraInput
+class ScrollTranslationCameraInput : public CameraInput
 {
 public:
   void handleEvents(const InputEvent& event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
-    int32_t wheel_delta, as::real delta_time) override;
+    int32_t scroll_delta, as::real delta_time) override;
 
   struct Props 
   {
@@ -355,7 +355,7 @@ public:
   void handleEvents(const InputEvent& event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
-    int32_t wheel_delta, as::real delta_time) override;
+    int32_t scroll_delta, as::real delta_time) override;
   bool exclusive() const override { return true; }
 
   Cameras orbit_cameras_;
