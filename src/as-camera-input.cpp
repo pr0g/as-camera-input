@@ -338,20 +338,20 @@ asc::Camera OrbitCameraInput::stepCamera(
 
   if (beginning()) {
     as::real hit_distance = intersectPlane(
-      target_camera.transform().translation,
-      as::mat3_basis_z(target_camera.transform().rotation),
+      target_camera.translation(),
+      as::mat3_basis_z(target_camera.rotation()),
       as::vec4(as::vec3::axis_y()));
 
     if (hit_distance >= 0.0_r) {
       const as::real dist = std::min(hit_distance, props_.max_orbit_distance_);
       next_camera.look_dist = -dist;
       next_camera.look_at =
-        target_camera.transform().translation
-        + as::mat3_basis_z(target_camera.transform().rotation) * dist;
+        target_camera.translation()
+        + as::mat3_basis_z(target_camera.rotation()) * dist;
     } else {
       next_camera.look_dist = -props_.default_orbit_distance_;
-      next_camera.look_at = target_camera.transform().translation
-                          + as::mat3_basis_z(target_camera.transform().rotation)
+      next_camera.look_at = target_camera.translation()
+                          + as::mat3_basis_z(target_camera.rotation())
                               * props_.default_orbit_distance_;
     }
   }
@@ -365,7 +365,7 @@ asc::Camera OrbitCameraInput::stepCamera(
   if (ending()) {
     orbit_cameras_.reset();
 
-    next_camera.look_at = next_camera.transform().translation;
+    next_camera.look_at = next_camera.translation();
     next_camera.look_dist = 0.0_r;
   }
 

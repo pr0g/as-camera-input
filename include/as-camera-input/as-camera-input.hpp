@@ -200,13 +200,13 @@ using PanAxesFn = std::function<PanAxes(const asc::Camera& camera)>;
 
 inline PanAxes lookPan(const asc::Camera& camera)
 {
-  const as::mat3 orientation = camera.transform().rotation;
+  const as::mat3 orientation = camera.rotation();
   return {as::mat3_basis_x(orientation), as::mat3_basis_y(orientation)};
 }
 
 inline PanAxes orbitPan(const asc::Camera& camera)
 {
-  const as::mat3 orientation = camera.transform().rotation;
+  const as::mat3 orientation = camera.rotation();
 
   const auto basis_x = as::mat3_basis_x(orientation);
   const auto basis_z = [&orientation] {
@@ -244,7 +244,7 @@ using TranslationAxesFn = std::function<as::mat3(const asc::Camera& camera)>;
 
 inline as::mat3 lookTranslation(const asc::Camera& camera)
 {
-  const as::mat3 orientation = camera.transform().rotation;
+  const as::mat3 orientation = camera.rotation();
 
   const auto basis_x = as::mat3_basis_x(orientation);
   const auto basis_y = as::vec3::axis_y();
@@ -255,7 +255,7 @@ inline as::mat3 lookTranslation(const asc::Camera& camera)
 
 inline as::mat3 orbitTranslation(const asc::Camera& camera)
 {
-  const as::mat3 orientation = camera.transform().rotation;
+  const as::mat3 orientation = camera.rotation();
 
   const auto basis_x = as::mat3_basis_x(orientation);
   const auto basis_y = as::vec3::axis_y();
