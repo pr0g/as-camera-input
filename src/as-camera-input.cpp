@@ -13,18 +13,18 @@ namespace asci
 
 void CameraSystem::handleEvents(const InputEvent& event)
 {
-  if (const auto& mouse_motion = std::get_if<MouseMotionEvent>(&event)) {
-    current_mouse_position_ = mouse_motion->motion_;
-    // handle mouse warp gracefully
+  if (const auto& cursor_motion = std::get_if<CursorMotionEvent>(&event)) {
+    current_cursor_position_ = cursor_motion->motion_;
+    // handle cursor warp gracefully
     if (
-      current_mouse_position_.has_value() && last_mouse_position_.has_value()) {
+      current_cursor_position_.has_value() && last_cursor_position_.has_value()) {
       if (
-        std::abs(current_mouse_position_->x - last_mouse_position_->x) >= 500) {
-        last_mouse_position_->x = current_mouse_position_->x;
+        std::abs(current_cursor_position_->x - last_cursor_position_->x) >= 500) {
+        last_cursor_position_->x = current_cursor_position_->x;
       }
       if (
-        std::abs(current_mouse_position_->y - last_mouse_position_->y) >= 500) {
-        last_mouse_position_->y = current_mouse_position_->y;
+        std::abs(current_cursor_position_->y - last_cursor_position_->y) >= 500) {
+        last_cursor_position_->y = current_cursor_position_->y;
       }
     }
   } else if (const auto& scroll = std::get_if<ScrollEvent>(&event)) {
@@ -37,17 +37,17 @@ void CameraSystem::handleEvents(const InputEvent& event)
 asc::Camera CameraSystem::stepCamera(
   const asc::Camera& target_camera, as::real delta_time)
 {
-  const auto mouse_delta =
-    current_mouse_position_.has_value() && last_mouse_position_.has_value()
-      ? current_mouse_position_.value() - last_mouse_position_.value()
+  const auto cursor_delta =
+    current_cursor_position_.has_value() && last_cursor_position_.has_value()
+      ? current_cursor_position_.value() - last_cursor_position_.value()
       : as::vec2i::zero();
 
-  if (current_mouse_position_.has_value()) {
-    last_mouse_position_ = current_mouse_position_;
+  if (current_cursor_position_.has_value()) {
+    last_cursor_position_ = current_cursor_position_;
   }
 
   const auto next_camera =
-    cameras_.stepCamera(target_camera, mouse_delta, scroll_delta_, delta_time);
+    cameras_.stepCamera(target_camera, cursor_delta, scroll_delta_, delta_time);
 
   scroll_delta_ = 0;
 
@@ -71,7 +71,7 @@ void Cameras::handleEvents(const InputEvent& event)
 }
 
 asc::Camera Cameras::stepCamera(
-  const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+  const asc::Camera& target_camera, const as::vec2i& cursor_delta,
   int32_t scroll_delta, const as::real delta_time)
 {
   for (int i = 0; i < idle_camera_inputs_.size();) {
@@ -98,7 +98,7 @@ asc::Camera Cameras::stepCamera(
   asc::Camera next_camera = target_camera;
   for (auto* camera_input : active_camera_inputs_) {
     next_camera = camera_input->stepCamera(
-      next_camera, mouse_delta, scroll_delta, delta_time);
+      next_camera, cursor_delta, scroll_delta, delta_time);
   }
 
   for (int i = 0; i < active_camera_inputs_.size();) {
@@ -143,13 +143,13 @@ void RotateCameraInput::handleEvents(const InputEvent& event)
 }
 
 asc::Camera RotateCameraInput::stepCamera(
-  const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+  const asc::Camera& target_camera, const as::vec2i& cursor_delta,
   const int32_t scroll_delta, const as::real delta_time)
 {
   asc::Camera next_camera = target_camera;
 
-  next_camera.pitch += as::real(mouse_delta[1]) * props_.rotate_speed_;
-  next_camera.yaw += as::real(mouse_delta[0]) * props_.rotate_speed_;
+  next_camera.pitch += as::real(cursor_delta[1]) * props_.rotate_speed_;
+  next_camera.yaw += as::real(cursor_delta[0]) * props_.rotate_speed_;
 
   auto clamp_rotation = [](const as::real angle) {
     return std::fmod(angle + as::k_tau, as::k_tau);
@@ -177,7 +177,7 @@ void PanCameraInput::handleEvents(const InputEvent& event)
 }
 
 asc::Camera PanCameraInput::stepCamera(
-  const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+  const asc::Camera& target_camera, const as::vec2i& cursor_delta,
   const int32_t scroll_delta, const as::real delta_time)
 {
   asc::Camera next_camera = target_camera;
@@ -185,9 +185,9 @@ asc::Camera PanCameraInput::stepCamera(
   const auto pan_axes = panAxesFn_(next_camera);
 
   const auto delta_pan_x =
-    as::real(mouse_delta.x) * pan_axes.horizontal_axis_ * props_.pan_speed_;
+    as::real(cursor_delta.x) * pan_axes.horizontal_axis_ * props_.pan_speed_;
   const auto delta_pan_y =
-    as::real(mouse_delta.y) * pan_axes.vertical_axis_ * props_.pan_speed_;
+    as::real(cursor_delta.y) * pan_axes.vertical_axis_ * props_.pan_speed_;
 
   const auto inv = [](const bool invert) {
     constexpr as::real Dir[] = {1.0_r, -1.0_r};
@@ -250,7 +250,7 @@ void TranslateCameraInput::handleEvents(const InputEvent& event)
 }
 
 asc::Camera TranslateCameraInput::stepCamera(
-  const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+  const asc::Camera& target_camera, const as::vec2i& cursor_delta,
   const int32_t scroll_delta, const as::real delta_time)
 {
   asc::Camera next_camera = target_camera;
@@ -331,7 +331,7 @@ static as::real intersectPlane(
 }
 
 asc::Camera OrbitCameraInput::stepCamera(
-  const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+  const asc::Camera& target_camera, const as::vec2i& cursor_delta,
   const int32_t scroll_delta, as::real delta_time)
 {
   asc::Camera next_camera = target_camera;
@@ -359,7 +359,7 @@ asc::Camera OrbitCameraInput::stepCamera(
   if (active()) {
     // todo: need to return nested cameras to idle state when ending
     next_camera = orbit_cameras_.stepCamera(
-      next_camera, mouse_delta, scroll_delta, delta_time);
+      next_camera, cursor_delta, scroll_delta, delta_time);
   }
 
   if (ending()) {
@@ -380,7 +380,7 @@ void OrbitDollyScrollCameraInput::handleEvents(const InputEvent& event)
 }
 
 asc::Camera OrbitDollyScrollCameraInput::stepCamera(
-  const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+  const asc::Camera& target_camera, const as::vec2i& cursor_delta,
   const int32_t scroll_delta, as::real delta_time)
 {
   asc::Camera next_camera = target_camera;
@@ -390,7 +390,7 @@ asc::Camera OrbitDollyScrollCameraInput::stepCamera(
   return next_camera;
 }
 
-void OrbitDollyMouseMoveCameraInput::handleEvents(const InputEvent& event)
+void OrbitDollyCursorMoveCameraInput::handleEvents(const InputEvent& event)
 {
   if (const auto& mouse_button = std::get_if<MouseButtonEvent>(&event)) {
     if (mouse_button->button_ == MouseButton::Right) {
@@ -403,13 +403,13 @@ void OrbitDollyMouseMoveCameraInput::handleEvents(const InputEvent& event)
   }
 }
 
-asc::Camera OrbitDollyMouseMoveCameraInput::stepCamera(
-  const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+asc::Camera OrbitDollyCursorMoveCameraInput::stepCamera(
+  const asc::Camera& target_camera, const as::vec2i& cursor_delta,
   const int32_t scroll_delta, as::real delta_time)
 {
   asc::Camera next_camera = target_camera;
   next_camera.look_dist = as::min(
-    next_camera.look_dist + as::real(mouse_delta.y) * props_.dolly_speed_,
+    next_camera.look_dist + as::real(cursor_delta.y) * props_.dolly_speed_,
     0.0_r);
   return next_camera;
 }
@@ -422,7 +422,7 @@ void ScrollTranslationCameraInput::handleEvents(const InputEvent& event)
 }
 
 asc::Camera ScrollTranslationCameraInput::stepCamera(
-  const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+  const asc::Camera& target_camera, const as::vec2i& cursor_delta,
   int32_t scroll_delta, as::real delta_time)
 {
   asc::Camera next_camera = target_camera;

@@ -14,7 +14,7 @@ namespace asci
 
 using as::operator""_r;
 
-struct MouseMotionEvent
+struct CursorMotionEvent
 {
   as::vec2i motion_;
 };
@@ -86,7 +86,7 @@ struct KeyboardButtonEvent
 };
 
 using InputEvent = std::variant<
-  std::monostate, MouseMotionEvent, ScrollEvent, MouseButtonEvent,
+  std::monostate, CursorMotionEvent, ScrollEvent, MouseButtonEvent,
   KeyboardButtonEvent>;
 
 class CameraInput
@@ -120,7 +120,7 @@ public:
 
   virtual void handleEvents(const InputEvent& event) = 0;
   virtual asc::Camera stepCamera(
-    const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+    const asc::Camera& target_camera, const as::vec2i& cursor_delta,
     int32_t scroll_delta, as::real delta_time) = 0;
   virtual bool exclusive() const { return false; }
 
@@ -147,7 +147,7 @@ public:
   void addCamera(CameraInput* camera_input);
   void handleEvents(const InputEvent& event);
   asc::Camera stepCamera(
-    const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+    const asc::Camera& target_camera, const as::vec2i& cursor_delta,
     int32_t scroll_delta, as::real delta_time);
   void reset();
 
@@ -166,8 +166,8 @@ public:
 
 private:
   int32_t scroll_delta_ = 0;
-  std::optional<as::vec2i> last_mouse_position_;
-  std::optional<as::vec2i> current_mouse_position_;
+  std::optional<as::vec2i> last_cursor_position_;
+  std::optional<as::vec2i> current_cursor_position_;
 };
 
 class RotateCameraInput : public CameraInput
@@ -179,7 +179,7 @@ public:
   }
   void handleEvents(const InputEvent& event) override;
   asc::Camera stepCamera(
-    const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+    const asc::Camera& target_camera, const as::vec2i& cursor_delta,
     int32_t scroll_delta, as::real delta_time) override;
 
   MouseButton button_type_;
@@ -226,7 +226,7 @@ public:
   }
   void handleEvents(const InputEvent& event) override;
   asc::Camera stepCamera(
-    const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+    const asc::Camera& target_camera, const as::vec2i& cursor_delta,
     int32_t scroll_delta, as::real delta_time) override;
 
   struct Props
@@ -276,7 +276,7 @@ public:
   }
   void handleEvents(const InputEvent& event) override;
   asc::Camera stepCamera(
-    const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+    const asc::Camera& target_camera, const as::vec2i& cursor_delta,
     int32_t scroll_delta, as::real delta_time) override;
   void resetImpl() override;
 
@@ -312,7 +312,7 @@ class OrbitDollyScrollCameraInput : public CameraInput
 public:
   void handleEvents(const InputEvent& event) override;
   asc::Camera stepCamera(
-    const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+    const asc::Camera& target_camera, const as::vec2i& cursor_delta,
     int32_t scroll_delta, as::real delta_time) override;
   
   struct Props 
@@ -321,12 +321,12 @@ public:
   } props_;
 };
 
-class OrbitDollyMouseMoveCameraInput : public CameraInput
+class OrbitDollyCursorMoveCameraInput : public CameraInput
 {
 public:
   void handleEvents(const InputEvent& event) override;
   asc::Camera stepCamera(
-    const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+    const asc::Camera& target_camera, const as::vec2i& cursor_delta,
     int32_t scroll_delta, as::real delta_time) override;
   
   struct Props 
@@ -340,7 +340,7 @@ class ScrollTranslationCameraInput : public CameraInput
 public:
   void handleEvents(const InputEvent& event) override;
   asc::Camera stepCamera(
-    const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+    const asc::Camera& target_camera, const as::vec2i& cursor_delta,
     int32_t scroll_delta, as::real delta_time) override;
 
   struct Props 
@@ -354,7 +354,7 @@ class OrbitCameraInput : public CameraInput
 public:
   void handleEvents(const InputEvent& event) override;
   asc::Camera stepCamera(
-    const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+    const asc::Camera& target_camera, const as::vec2i& cursor_delta,
     int32_t scroll_delta, as::real delta_time) override;
   bool exclusive() const override { return true; }
 
