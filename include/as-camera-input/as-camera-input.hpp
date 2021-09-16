@@ -204,12 +204,13 @@ public:
     const asc::Camera& target_camera, const as::vec2i& cursor_delta,
     int32_t scroll_delta, as::real delta_time) override;
 
+  MouseButton button_type_;
+  as::vec3 pivot_ = as::vec3::zero();
+
   struct Props
   {
     as::real rotate_speed_ = 0.005_r;
   } props_;
-
-  MouseButton button_type_;
 };
 
 struct PanAxes

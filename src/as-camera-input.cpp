@@ -219,13 +219,21 @@ asc::Camera PivotCameraInput::stepCamera(
   const auto delta_pitch = as::real(cursor_delta[1]) * props_.rotate_speed_;
   const auto delta_yaw = as::real(cursor_delta[0]) * props_.rotate_speed_;
 
-  auto rot_yaw = as::affine_from_mat3(as::mat3_rotation_y(delta_yaw));
+  auto rot_yaw = as::affine_mul(
+    as::affine_mul(
+      as::affine_from_vec3(-pivot_),
+      as::affine_from_mat3(as::mat3_rotation_y(delta_yaw))),
+    as::affine_from_vec3(pivot_));
   auto rot_pitch = as::affine_mul(
     as::affine_mul(
-      as::affine_inverse(
-        as::affine_from_mat3(as::mat3_from_affine(next_camera.transform()))),
-      as::affine_from_mat3(as::mat3_rotation_x(delta_pitch))),
-    as::affine_from_mat3(as::mat3_from_affine(next_camera.transform())));
+      as::affine_mul(
+        as::affine_mul(
+          as::affine_from_vec3(-pivot_),
+          as::affine_inverse(as::affine_from_mat3(
+            as::mat3_from_affine(next_camera.transform())))),
+        as::affine_from_mat3(as::mat3_rotation_x(delta_pitch))),
+      as::affine_from_mat3(as::mat3_from_affine(next_camera.transform()))),
+    as::affine_from_vec3(pivot_));
 
   auto next =
     as::affine_mul(as::affine_mul(next_camera.transform(), rot_pitch), rot_yaw);
