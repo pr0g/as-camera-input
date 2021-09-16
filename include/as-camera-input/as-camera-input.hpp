@@ -177,6 +177,7 @@ public:
     : button_type_(button_type)
   {
   }
+
   void handleEvents(const InputEvent& event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& cursor_delta,
@@ -188,6 +189,27 @@ public:
   {
     as::real rotate_speed_ = 0.005_r;
   } props_;
+};
+
+class PivotCameraInput : public CameraInput
+{
+public:
+  explicit PivotCameraInput(const MouseButton button_type)
+    : button_type_(button_type)
+  {
+  }
+
+  void handleEvents(const InputEvent& event) override;
+  asc::Camera stepCamera(
+    const asc::Camera& target_camera, const as::vec2i& cursor_delta,
+    int32_t scroll_delta, as::real delta_time) override;
+
+  struct Props
+  {
+    as::real rotate_speed_ = 0.005_r;
+  } props_;
+
+  MouseButton button_type_;
 };
 
 struct PanAxes
@@ -314,8 +336,8 @@ public:
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& cursor_delta,
     int32_t scroll_delta, as::real delta_time) override;
-  
-  struct Props 
+
+  struct Props
   {
     as::real dolly_speed_ = 0.2_r;
   } props_;
@@ -328,8 +350,8 @@ public:
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& cursor_delta,
     int32_t scroll_delta, as::real delta_time) override;
-  
-  struct Props 
+
+  struct Props
   {
     as::real dolly_speed_ = 0.1_r;
   } props_;
@@ -343,7 +365,7 @@ public:
     const asc::Camera& target_camera, const as::vec2i& cursor_delta,
     int32_t scroll_delta, as::real delta_time) override;
 
-  struct Props 
+  struct Props
   {
     as::real translate_speed_ = 0.2_r;
   } props_;

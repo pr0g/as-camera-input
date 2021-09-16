@@ -17,13 +17,16 @@ void CameraSystem::handleEvents(const InputEvent& event)
     current_cursor_position_ = cursor_motion->motion_;
     // handle cursor warp gracefully
     if (
-      current_cursor_position_.has_value() && last_cursor_position_.has_value()) {
+      current_cursor_position_.has_value()
+      && last_cursor_position_.has_value()) {
       if (
-        std::abs(current_cursor_position_->x - last_cursor_position_->x) >= 500) {
+        std::abs(current_cursor_position_->x - last_cursor_position_->x)
+        >= 500) {
         last_cursor_position_->x = current_cursor_position_->x;
       }
       if (
-        std::abs(current_cursor_position_->y - last_cursor_position_->y) >= 500) {
+        std::abs(current_cursor_position_->y - last_cursor_position_->y)
+        >= 500) {
         last_cursor_position_->y = current_cursor_position_->y;
       }
     }
@@ -142,6 +145,37 @@ void RotateCameraInput::handleEvents(const InputEvent& event)
   }
 }
 
+// https://www.geometrictools.com/Documentation/EulerAngles.pdf
+static std::tuple<float, float, float> eulerAngles(const as::mat3& orientation)
+{
+  float x;
+  float y;
+  float z;
+
+  // 2.4 Factor as RyRzRx
+  if (orientation[as::mat3_rc(1, 0)] < 1.0f) {
+    if (orientation[as::mat3_rc(1, 0)] > -1.0f) {
+      x = std::atan2(
+        -orientation[as::mat3_rc(1, 2)], orientation[as::mat3_rc(1, 1)]);
+      y = std::atan2(
+        -orientation[as::mat3_rc(2, 0)], orientation[as::mat3_rc(0, 0)]);
+      z = std::asin(orientation[as::mat3_rc(1, 0)]);
+    } else {
+      x = 0.0f;
+      y = -std::atan2(
+        orientation[as::mat3_rc(2, 1)], orientation[as::mat3_rc(2, 2)]);
+      z = -as::k_pi * 0.5f;
+    }
+  } else {
+    x = 0.0f;
+    y = std::atan2(
+      orientation[as::mat3_rc(2, 1)], orientation[as::mat3_rc(2, 2)]);
+    z = as::k_pi * 0.5f;
+  }
+
+  return {x, y, z};
+}
+
 asc::Camera RotateCameraInput::stepCamera(
   const asc::Camera& target_camera, const as::vec2i& cursor_delta,
   const int32_t scroll_delta, const as::real delta_time)
@@ -159,6 +193,47 @@ asc::Camera RotateCameraInput::stepCamera(
   // clamp pitch to be +-90 degrees
   next_camera.pitch =
     as::clamp(next_camera.pitch, -as::k_pi * 0.5_r, as::k_pi * 0.5_r);
+
+  return next_camera;
+}
+
+void PivotCameraInput::handleEvents(const InputEvent& event)
+{
+  if (const auto& mouse_button = std::get_if<MouseButtonEvent>(&event)) {
+    if (mouse_button->button_ == button_type_) {
+      if (mouse_button->action_ == ButtonAction::Down) {
+        beginActivation();
+      } else if (mouse_button->action_ == ButtonAction::Up) {
+        endActivation();
+      }
+    }
+  }
+}
+
+asc::Camera PivotCameraInput::stepCamera(
+  const asc::Camera& target_camera, const as::vec2i& cursor_delta,
+  const int32_t scroll_delta, const as::real delta_time)
+{
+  asc::Camera next_camera = target_camera;
+
+  const auto delta_pitch = as::real(cursor_delta[1]) * props_.rotate_speed_;
+  const auto delta_yaw = as::real(cursor_delta[0]) * props_.rotate_speed_;
+
+  auto rot_yaw = as::affine_from_mat3(as::mat3_rotation_y(delta_yaw));
+  auto rot_pitch = as::affine_mul(
+    as::affine_mul(
+      as::affine_inverse(
+        as::affine_from_mat3(as::mat3_from_affine(next_camera.transform()))),
+      as::affine_from_mat3(as::mat3_rotation_x(delta_pitch))),
+    as::affine_from_mat3(as::mat3_from_affine(next_camera.transform())));
+
+  auto next =
+    as::affine_mul(as::affine_mul(next_camera.transform(), rot_pitch), rot_yaw);
+
+  auto angles = eulerAngles(next.rotation);
+  next_camera.pitch = std::get<0>(angles);
+  next_camera.yaw = std::get<1>(angles);
+  next_camera.look_at = next.translation;
 
   return next_camera;
 }
@@ -338,16 +413,14 @@ asc::Camera OrbitCameraInput::stepCamera(
 
   if (beginning()) {
     as::real hit_distance = intersectPlane(
-      target_camera.translation(),
-      as::mat3_basis_z(target_camera.rotation()),
+      target_camera.translation(), as::mat3_basis_z(target_camera.rotation()),
       as::vec4(as::vec3::axis_y()));
 
     if (hit_distance >= 0.0_r) {
       const as::real dist = std::min(hit_distance, props_.max_orbit_distance_);
       next_camera.look_dist = -dist;
-      next_camera.look_at =
-        target_camera.translation()
-        + as::mat3_basis_z(target_camera.rotation()) * dist;
+      next_camera.look_at = target_camera.translation()
+                          + as::mat3_basis_z(target_camera.rotation()) * dist;
     } else {
       next_camera.look_dist = -props_.default_orbit_distance_;
       next_camera.look_at = target_camera.translation()
@@ -385,7 +458,8 @@ asc::Camera OrbitDollyScrollCameraInput::stepCamera(
 {
   asc::Camera next_camera = target_camera;
   next_camera.look_dist = as::min(
-    next_camera.look_dist + as::real(scroll_delta) * props_.dolly_speed_, 0.0_r);
+    next_camera.look_dist + as::real(scroll_delta) * props_.dolly_speed_,
+    0.0_r);
   endActivation();
   return next_camera;
 }
