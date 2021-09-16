@@ -17,7 +17,7 @@ FetchContent_Declare(
     GIT_TAG        origin/main)
 
 FetchContent_MakeAvailable(as-camera bec cmake-helpers)
-    
+
 list(APPEND CMAKE_MODULE_PATH ${cmake-helpers_SOURCE_DIR})
 
 add_library(${PROJECT_NAME})
