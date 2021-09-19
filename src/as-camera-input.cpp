@@ -227,10 +227,10 @@ asc::Camera PivotCameraInput::stepCamera(
       as::affine_mul(
         as::affine_mul(
           as::affine_from_vec3(-pivot_),
-          as::affine_inverse(as::affine_from_mat3(
-            as::mat3_from_affine(next_camera.transform())))),
+          as::affine_inverse(
+            as::affine_from_mat3(next_camera.transform().rotation))),
         as::affine_from_mat3(as::mat3_rotation_x(delta_pitch))),
-      as::affine_from_mat3(as::mat3_from_affine(next_camera.transform()))),
+      as::affine_from_mat3(next_camera.transform().rotation)),
     as::affine_from_vec3(pivot_));
 
   const auto next =
