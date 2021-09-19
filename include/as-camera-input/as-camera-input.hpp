@@ -334,6 +334,22 @@ private:
   bool boost_ = false;
 };
 
+class PivotDollyScrollCameraInput : public CameraInput
+{
+public:
+  void handleEvents(const InputEvent& event) override;
+  asc::Camera stepCamera(
+    const asc::Camera& target_camera, const as::vec2i& cursor_delta,
+    int32_t scroll_delta, as::real delta_time) override;
+
+  as::vec3 pivot_ = as::vec3::zero();
+
+  struct Props
+  {
+    as::real dolly_speed_ = 0.2_r;
+  } props_;
+};
+
 class OrbitDollyScrollCameraInput : public CameraInput
 {
 public:

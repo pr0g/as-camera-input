@@ -447,6 +447,34 @@ asc::Camera OrbitCameraInput::stepCamera(
   return next_camera;
 }
 
+void PivotDollyScrollCameraInput::handleEvents(const InputEvent& event)
+{
+  if (const auto* scroll = std::get_if<ScrollEvent>(&event)) {
+    beginActivation();
+  }
+}
+
+asc::Camera PivotDollyScrollCameraInput::stepCamera(
+  const asc::Camera& target_camera, const as::vec2i& cursor_delta,
+  int32_t scroll_delta, as::real delta_time)
+{
+  asc::Camera next_camera = target_camera;
+  const auto pivot_direction = as::vec_normalize(pivot_ - target_camera.look_at);
+  next_camera.look_at =
+    target_camera.look_at
+    + pivot_direction * as::real(scroll_delta) * props_.dolly_speed_;
+  auto pivot_dot =
+    as::vec_dot(target_camera.look_at - pivot_, next_camera.look_at - pivot_);
+  auto min_distance = 0.01f;
+  auto min_position = pivot_ - pivot_direction * min_distance;
+  auto distance = as::vec_distance(pivot_, next_camera.look_at);
+  if (distance <= min_distance || pivot_dot < 0.0f) {
+    next_camera.look_at = min_position;
+  }
+  endActivation();
+  return next_camera;
+}
+
 void OrbitDollyScrollCameraInput::handleEvents(const InputEvent& event)
 {
   if (const auto* scroll = std::get_if<ScrollEvent>(&event)) {
