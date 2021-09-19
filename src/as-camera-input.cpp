@@ -132,21 +132,27 @@ void Cameras::reset()
   }
 }
 
-void RotateCameraInput::handleEvents(const InputEvent& event)
+static void handleEventsCommon(
+  CameraInput& cameraInput, const InputEvent& event, MouseButton button_type)
 {
   if (const auto& mouse_button = std::get_if<MouseButtonEvent>(&event)) {
-    if (mouse_button->button_ == button_type_) {
+    if (mouse_button->button_ == button_type) {
       if (mouse_button->action_ == ButtonAction::Down) {
-        beginActivation();
+        cameraInput.beginActivation();
       } else if (mouse_button->action_ == ButtonAction::Up) {
-        endActivation();
+        cameraInput.endActivation();
       }
     }
   }
 }
 
+void RotateCameraInput::handleEvents(const InputEvent& event)
+{
+  handleEventsCommon(*this, event, button_type_);
+}
+
 // https://www.geometrictools.com/Documentation/EulerAngles.pdf
-static std::tuple<float, float, float> eulerAngles(const as::mat3& orientation)
+as::vec3 eulerAngles(const as::mat3& orientation)
 {
   float x;
   float y;
@@ -173,7 +179,7 @@ static std::tuple<float, float, float> eulerAngles(const as::mat3& orientation)
     z = as::k_pi * 0.5f;
   }
 
-  return {x, y, z};
+  return as::vec3(x, y, z);
 }
 
 asc::Camera RotateCameraInput::stepCamera(
@@ -199,15 +205,7 @@ asc::Camera RotateCameraInput::stepCamera(
 
 void PivotCameraInput::handleEvents(const InputEvent& event)
 {
-  if (const auto& mouse_button = std::get_if<MouseButtonEvent>(&event)) {
-    if (mouse_button->button_ == button_type_) {
-      if (mouse_button->action_ == ButtonAction::Down) {
-        beginActivation();
-      } else if (mouse_button->action_ == ButtonAction::Up) {
-        endActivation();
-      }
-    }
-  }
+  handleEventsCommon(*this, event, button_type_);
 }
 
 asc::Camera PivotCameraInput::stepCamera(
@@ -219,12 +217,12 @@ asc::Camera PivotCameraInput::stepCamera(
   const auto delta_pitch = as::real(cursor_delta[1]) * props_.rotate_speed_;
   const auto delta_yaw = as::real(cursor_delta[0]) * props_.rotate_speed_;
 
-  auto rot_yaw = as::affine_mul(
+  const auto rot_yaw = as::affine_mul(
     as::affine_mul(
       as::affine_from_vec3(-pivot_),
       as::affine_from_mat3(as::mat3_rotation_y(delta_yaw))),
     as::affine_from_vec3(pivot_));
-  auto rot_pitch = as::affine_mul(
+  const auto rot_pitch = as::affine_mul(
     as::affine_mul(
       as::affine_mul(
         as::affine_mul(
@@ -235,12 +233,12 @@ asc::Camera PivotCameraInput::stepCamera(
       as::affine_from_mat3(as::mat3_from_affine(next_camera.transform()))),
     as::affine_from_vec3(pivot_));
 
-  auto next =
+  const auto next =
     as::affine_mul(as::affine_mul(next_camera.transform(), rot_pitch), rot_yaw);
 
-  auto angles = eulerAngles(next.rotation);
-  next_camera.pitch = std::get<0>(angles);
-  next_camera.yaw = std::get<1>(angles);
+  const auto angles = eulerAngles(next.rotation);
+  next_camera.pitch = angles.x;
+  next_camera.yaw = angles.y;
   next_camera.look_at = next.translation;
 
   return next_camera;
@@ -248,15 +246,7 @@ asc::Camera PivotCameraInput::stepCamera(
 
 void PanCameraInput::handleEvents(const InputEvent& event)
 {
-  if (const auto& mouse_button = std::get_if<MouseButtonEvent>(&event)) {
-    if (mouse_button->button_ == MouseButton::Middle) {
-      if (mouse_button->action_ == ButtonAction::Down) {
-        beginActivation();
-      } else if (mouse_button->action_ == ButtonAction::Up) {
-        endActivation();
-      }
-    }
-  }
+  handleEventsCommon(*this, event, button_type_);
 }
 
 asc::Camera PanCameraInput::stepCamera(
@@ -390,17 +380,15 @@ void OrbitCameraInput::handleEvents(const InputEvent& event)
 {
   if (const auto* keyboard_button = std::get_if<KeyboardButtonEvent>(&event)) {
     if (keyboard_button->button_ == KeyboardButton::LAlt) {
-      if (keyboard_button->repeat_) {
-        goto end;
-      }
-      if (keyboard_button->action_ == ButtonAction::Down) {
-        beginActivation();
-      } else if (keyboard_button->action_ == ButtonAction::Up) {
-        endActivation();
+      if (!keyboard_button->repeat_) {
+        if (keyboard_button->action_ == ButtonAction::Down) {
+          beginActivation();
+        } else if (keyboard_button->action_ == ButtonAction::Up) {
+          endActivation();
+        }
       }
     }
   }
-end:
   if (active()) {
     orbit_cameras_.handleEvents(event);
   }
@@ -474,15 +462,7 @@ asc::Camera OrbitDollyScrollCameraInput::stepCamera(
 
 void OrbitDollyCursorMoveCameraInput::handleEvents(const InputEvent& event)
 {
-  if (const auto& mouse_button = std::get_if<MouseButtonEvent>(&event)) {
-    if (mouse_button->button_ == MouseButton::Right) {
-      if (mouse_button->action_ == ButtonAction::Down) {
-        beginActivation();
-      } else if (mouse_button->action_ == ButtonAction::Up) {
-        endActivation();
-      }
-    }
-  }
+  handleEventsCommon(*this, event, button_type_);
 }
 
 asc::Camera OrbitDollyCursorMoveCameraInput::stepCamera(

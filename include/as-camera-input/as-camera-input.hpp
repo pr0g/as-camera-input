@@ -89,6 +89,8 @@ using InputEvent = std::variant<
   std::monostate, CursorMotionEvent, ScrollEvent, MouseButtonEvent,
   KeyboardButtonEvent>;
 
+as::vec3 eulerAngles(const as::mat3& orientation);
+
 class CameraInput
 {
 public:
@@ -243,14 +245,16 @@ inline PanAxes orbitPan(const asc::Camera& camera)
 class PanCameraInput : public CameraInput
 {
 public:
-  explicit PanCameraInput(PanAxesFn panAxesFn)
-    : panAxesFn_(std::move(panAxesFn))
+  PanCameraInput(const MouseButton button_type, PanAxesFn panAxesFn)
+    : panAxesFn_(std::move(panAxesFn)), button_type_(button_type)
   {
   }
   void handleEvents(const InputEvent& event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& cursor_delta,
     int32_t scroll_delta, as::real delta_time) override;
+
+  MouseButton button_type_;
 
   struct Props
   {
@@ -347,10 +351,16 @@ public:
 class OrbitDollyCursorMoveCameraInput : public CameraInput
 {
 public:
+  explicit OrbitDollyCursorMoveCameraInput(const MouseButton button_type)
+    : button_type_(button_type)
+  {
+  }
   void handleEvents(const InputEvent& event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& cursor_delta,
     int32_t scroll_delta, as::real delta_time) override;
+
+  MouseButton button_type_;
 
   struct Props
   {
