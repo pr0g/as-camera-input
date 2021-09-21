@@ -226,10 +226,8 @@ asc::Camera PanCameraInput::stepCamera(
     return Dir[static_cast<int>(invert)];
   };
 
-  next_camera.look_at += as::affine_inv_transform_dir(
-    next_camera.transform(), delta_pan_x * inv(props_.pan_invert_x_));
-  next_camera.look_at += as::affine_inv_transform_dir(
-    next_camera.transform(), delta_pan_y * -inv(props_.pan_invert_y_));
+  translationDeltaFn_(next_camera, delta_pan_x * inv(props_.pan_invert_x_));
+  translationDeltaFn_(next_camera, delta_pan_y * -inv(props_.pan_invert_y_));
 
   return next_camera;
 }
@@ -301,33 +299,27 @@ asc::Camera TranslateCameraInput::stepCamera(
   }();
 
   if ((translation_ & TranslationType::Forward) == TranslationType::Forward) {
-    next_camera.look_at += as::affine_inv_transform_dir(
-      next_camera.transform(), axis_z * speed * delta_time);
+    translationDeltaFn_(next_camera, axis_z * speed * delta_time);
   }
 
   if ((translation_ & TranslationType::Backward) == TranslationType::Backward) {
-    next_camera.look_at -= as::affine_inv_transform_dir(
-      next_camera.transform(), axis_z * speed * delta_time);
+    translationDeltaFn_(next_camera, -axis_z * speed * delta_time);
   }
 
   if ((translation_ & TranslationType::Left) == TranslationType::Left) {
-    next_camera.look_at -= as::affine_inv_transform_dir(
-      next_camera.transform(), axis_x * speed * delta_time);
+    translationDeltaFn_(next_camera, -axis_x * speed * delta_time);
   }
 
   if ((translation_ & TranslationType::Right) == TranslationType::Right) {
-    next_camera.look_at += as::affine_inv_transform_dir(
-      next_camera.transform(), axis_x * speed * delta_time);
+    translationDeltaFn_(next_camera, axis_x * speed * delta_time);
   }
 
   if ((translation_ & TranslationType::Up) == TranslationType::Up) {
-    next_camera.look_at += as::affine_inv_transform_dir(
-      next_camera.transform(), axis_y * speed * delta_time);
+    translationDeltaFn_(next_camera, axis_y * speed * delta_time);
   }
 
   if ((translation_ & TranslationType::Down) == TranslationType::Down) {
-    next_camera.look_at -= as::affine_inv_transform_dir(
-      next_camera.transform(), axis_y * speed * delta_time);
+    translationDeltaFn_(next_camera, -axis_y * speed * delta_time);
   }
 
   if (ending()) {
@@ -375,21 +367,9 @@ asc::Camera OrbitCameraInput::stepCamera(
   asc::Camera next_camera = target_camera;
 
   if (beginning()) {
-    as::real hit_distance = intersectPlane(
-      target_camera.translation(), as::mat3_basis_z(target_camera.rotation()),
-      as::vec4(as::vec3::axis_y()));
-
-    if (hit_distance >= 0.0_r) {
-      const as::real dist = std::min(hit_distance, props_.max_orbit_distance_);
-      // next_camera.look_dist = -dist;
-      next_camera.look_at = target_camera.translation()
-                          + as::mat3_basis_z(target_camera.rotation()) * dist;
-    } else {
-      // next_camera.look_dist = -props_.default_orbit_distance_;
-      next_camera.look_at = target_camera.translation()
-                          + as::mat3_basis_z(target_camera.rotation())
-                              * props_.default_orbit_distance_;
-    }
+    next_camera.pivot = as::vec3::zero();
+    next_camera.look_at = as::affine_inv_transform_pos(
+      next_camera.transform(), target_camera.translation());
   }
 
   if (active()) {
@@ -401,8 +381,8 @@ asc::Camera OrbitCameraInput::stepCamera(
   if (ending()) {
     orbit_cameras_.reset();
 
-    next_camera.look_at = next_camera.translation();
-    // next_camera.look_dist = 0.0_r;
+    next_camera.pivot = next_camera.translation();
+    next_camera.look_at = as::vec3::zero();
   }
 
   return next_camera;
@@ -474,7 +454,7 @@ asc::Camera ScrollTranslationCameraInput::stepCamera(
   const auto translation_basis = lookTranslation(next_camera);
   const auto axis_z = as::mat3_basis_z(translation_basis);
 
-  next_camera.look_at +=
+  next_camera.pivot +=
     axis_z * as::real(scroll_delta) * props_.translate_speed_;
 
   endActivation();

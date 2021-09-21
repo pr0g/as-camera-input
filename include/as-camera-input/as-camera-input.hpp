@@ -220,11 +220,27 @@ inline PanAxes orbitPan(const asc::Camera& camera)
   return {basis_x, basis_z};
 }
 
+using TranslationDeltaFn =
+  std::function<void(asc::Camera& camera, const as::vec3& delta)>;
+
+inline void translatePivot(asc::Camera& camera, const as::vec3& delta)
+{
+  camera.pivot += delta;
+}
+
+inline void translateOffset(asc::Camera& camera, const as::vec3& delta)
+{
+  camera.look_at += as::affine_inv_transform_dir(camera.transform(), delta);
+}
+
 class PanCameraInput : public CameraInput
 {
 public:
-  PanCameraInput(const MouseButton button_type, PanAxesFn panAxesFn)
-    : panAxesFn_(std::move(panAxesFn)), button_type_(button_type)
+  PanCameraInput(
+    const MouseButton button_type, PanAxesFn panAxesFn,
+    TranslationDeltaFn translationDeltaFn)
+    : panAxesFn_(std::move(panAxesFn)), button_type_(button_type),
+      translationDeltaFn_(translationDeltaFn)
   {
   }
   void handleEvents(const InputEvent& event) override;
@@ -243,6 +259,7 @@ public:
 
 private:
   PanAxesFn panAxesFn_;
+  TranslationDeltaFn translationDeltaFn_;
 };
 
 using TranslationAxesFn = std::function<as::mat3(const asc::Camera& camera)>;
@@ -275,8 +292,10 @@ inline as::mat3 orbitTranslation(const asc::Camera& camera)
 class TranslateCameraInput : public CameraInput
 {
 public:
-  explicit TranslateCameraInput(TranslationAxesFn translationAxesFn)
-    : translationAxesFn_(std::move(translationAxesFn))
+  explicit TranslateCameraInput(
+    TranslationAxesFn translationAxesFn, TranslationDeltaFn translationDeltaFn)
+    : translationAxesFn_(std::move(translationAxesFn)),
+      translationDeltaFn_(std::move(translationDeltaFn))
   {
   }
   void handleEvents(const InputEvent& event) override;
@@ -309,6 +328,7 @@ private:
 
   TranslationType translation_ = TranslationType::Nil;
   TranslationAxesFn translationAxesFn_;
+  TranslationDeltaFn translationDeltaFn_;
   bool boost_ = false;
 };
 
