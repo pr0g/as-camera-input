@@ -391,6 +391,7 @@ public:
   bool exclusive() const override { return true; }
 
   Cameras orbit_cameras_;
+  std::function<as::vec3()> pivotFn_;
 
   struct Props
   {

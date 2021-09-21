@@ -367,7 +367,7 @@ asc::Camera OrbitCameraInput::stepCamera(
   asc::Camera next_camera = target_camera;
 
   if (beginning()) {
-    next_camera.pivot = as::vec3::zero();
+    next_camera.pivot = pivotFn_();
     next_camera.look_at = as::affine_inv_transform_pos(
       next_camera.transform(), target_camera.translation());
   }
