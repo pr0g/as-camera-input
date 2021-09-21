@@ -193,28 +193,6 @@ public:
   } props_;
 };
 
-class PivotCameraInput : public CameraInput
-{
-public:
-  explicit PivotCameraInput(const MouseButton button_type)
-    : button_type_(button_type)
-  {
-  }
-
-  void handleEvents(const InputEvent& event) override;
-  asc::Camera stepCamera(
-    const asc::Camera& target_camera, const as::vec2i& cursor_delta,
-    int32_t scroll_delta, as::real delta_time) override;
-
-  MouseButton button_type_;
-  as::vec3 pivot_ = as::vec3::zero();
-
-  struct Props
-  {
-    as::real rotate_speed_ = 0.005_r;
-  } props_;
-};
-
 struct PanAxes
 {
   as::vec3 horizontal_axis_;
@@ -342,35 +320,20 @@ public:
     const asc::Camera& target_camera, const as::vec2i& cursor_delta,
     int32_t scroll_delta, as::real delta_time) override;
 
-  as::vec3 pivot_ = as::vec3::zero();
-
   struct Props
   {
     as::real dolly_speed_ = 0.2_r;
   } props_;
 };
 
-class OrbitDollyScrollCameraInput : public CameraInput
+class PivotDollyMotionCameraInput : public CameraInput
 {
 public:
-  void handleEvents(const InputEvent& event) override;
-  asc::Camera stepCamera(
-    const asc::Camera& target_camera, const as::vec2i& cursor_delta,
-    int32_t scroll_delta, as::real delta_time) override;
-
-  struct Props
-  {
-    as::real dolly_speed_ = 0.2_r;
-  } props_;
-};
-
-class OrbitDollyCursorMoveCameraInput : public CameraInput
-{
-public:
-  explicit OrbitDollyCursorMoveCameraInput(const MouseButton button_type)
+  explicit PivotDollyMotionCameraInput(const MouseButton button_type)
     : button_type_(button_type)
   {
   }
+
   void handleEvents(const InputEvent& event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& cursor_delta,

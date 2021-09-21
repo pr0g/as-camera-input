@@ -203,53 +203,6 @@ asc::Camera RotateCameraInput::stepCamera(
   return next_camera;
 }
 
-void PivotCameraInput::handleEvents(const InputEvent& event)
-{
-  handleEventsCommon(*this, event, button_type_);
-}
-
-asc::Camera PivotCameraInput::stepCamera(
-  const asc::Camera& target_camera, const as::vec2i& cursor_delta,
-  const int32_t scroll_delta, const as::real delta_time)
-{
-  asc::Camera next_camera = target_camera;
-
-  const auto delta_pitch = as::real(cursor_delta[1]) * props_.rotate_speed_;
-  const auto delta_yaw = as::real(cursor_delta[0]) * props_.rotate_speed_;
-
-  // clamp pitch to be +-90 degrees
-  auto final_delta_pitch =
-    as::clamp(
-      next_camera.pitch + delta_pitch, -as::k_pi * 0.5_r, as::k_pi * 0.5_r)
-    - next_camera.pitch;
-
-  const auto rot_yaw = as::affine_mul(
-    as::affine_mul(
-      as::affine_from_vec3(-pivot_),
-      as::affine_from_mat3(as::mat3_rotation_y(delta_yaw))),
-    as::affine_from_vec3(pivot_));
-  const auto rot_pitch = as::affine_mul(
-    as::affine_mul(
-      as::affine_mul(
-        as::affine_mul(
-          as::affine_from_vec3(-pivot_),
-          as::affine_inverse(
-            as::affine_from_mat3(next_camera.transform().rotation))),
-        as::affine_from_mat3(as::mat3_rotation_x(final_delta_pitch))),
-      as::affine_from_mat3(next_camera.transform().rotation)),
-    as::affine_from_vec3(pivot_));
-
-  const auto next =
-    as::affine_mul(as::affine_mul(next_camera.transform(), rot_pitch), rot_yaw);
-
-  const auto angles = eulerAngles(next.rotation);
-  next_camera.pitch = angles.x;
-  next_camera.yaw = angles.y;
-  next_camera.look_at = next.translation;
-
-  return next_camera;
-}
-
 void PanCameraInput::handleEvents(const InputEvent& event)
 {
   handleEventsCommon(*this, event, button_type_);
@@ -346,27 +299,33 @@ asc::Camera TranslateCameraInput::stepCamera(
   }();
 
   if ((translation_ & TranslationType::Forward) == TranslationType::Forward) {
-    next_camera.look_at += axis_z * speed * delta_time;
+    next_camera.look_at += as::affine_inv_transform_dir(
+      next_camera.transform(), axis_z * speed * delta_time);
   }
 
   if ((translation_ & TranslationType::Backward) == TranslationType::Backward) {
-    next_camera.look_at -= axis_z * speed * delta_time;
+    next_camera.look_at -= as::affine_inv_transform_dir(
+      next_camera.transform(), axis_z * speed * delta_time);
   }
 
   if ((translation_ & TranslationType::Left) == TranslationType::Left) {
-    next_camera.look_at -= axis_x * speed * delta_time;
+    next_camera.look_at -= as::affine_inv_transform_dir(
+      next_camera.transform(), axis_x * speed * delta_time);
   }
 
   if ((translation_ & TranslationType::Right) == TranslationType::Right) {
-    next_camera.look_at += axis_x * speed * delta_time;
+    next_camera.look_at += as::affine_inv_transform_dir(
+      next_camera.transform(), axis_x * speed * delta_time);
   }
 
   if ((translation_ & TranslationType::Up) == TranslationType::Up) {
-    next_camera.look_at += axis_y * speed * delta_time;
+    next_camera.look_at += as::affine_inv_transform_dir(
+      next_camera.transform(), axis_y * speed * delta_time);
   }
 
   if ((translation_ & TranslationType::Down) == TranslationType::Down) {
-    next_camera.look_at -= axis_y * speed * delta_time;
+    next_camera.look_at -= as::affine_inv_transform_dir(
+      next_camera.transform(), axis_y * speed * delta_time);
   }
 
   if (ending()) {
@@ -420,11 +379,11 @@ asc::Camera OrbitCameraInput::stepCamera(
 
     if (hit_distance >= 0.0_r) {
       const as::real dist = std::min(hit_distance, props_.max_orbit_distance_);
-      next_camera.look_dist = -dist;
+      // next_camera.look_dist = -dist;
       next_camera.look_at = target_camera.translation()
                           + as::mat3_basis_z(target_camera.rotation()) * dist;
     } else {
-      next_camera.look_dist = -props_.default_orbit_distance_;
+      // next_camera.look_dist = -props_.default_orbit_distance_;
       next_camera.look_at = target_camera.translation()
                           + as::mat3_basis_z(target_camera.rotation())
                               * props_.default_orbit_distance_;
@@ -441,7 +400,7 @@ asc::Camera OrbitCameraInput::stepCamera(
     orbit_cameras_.reset();
 
     next_camera.look_at = next_camera.translation();
-    next_camera.look_dist = 0.0_r;
+    // next_camera.look_dist = 0.0_r;
   }
 
   return next_camera;
@@ -454,59 +413,49 @@ void PivotDollyScrollCameraInput::handleEvents(const InputEvent& event)
   }
 }
 
+static asc::Camera Dolly(const asc::Camera& target_camera, const float delta)
+{
+  asc::Camera next_camera = target_camera;
+  const auto pivot_direction =
+    as::vec_normalize(target_camera.pivot - target_camera.translation());
+  const auto pivot_transformed_direction = as::vec_normalize(
+    as::affine_inv_transform_dir(target_camera.transform(), pivot_direction));
+  next_camera.look_at =
+    target_camera.look_at + pivot_transformed_direction * delta;
+  auto pivot_dot = as::vec_dot(
+    target_camera.translation() - target_camera.pivot,
+    next_camera.translation() - target_camera.pivot);
+  auto min_distance = 0.01f;
+  auto distance =
+    as::vec_distance(next_camera.pivot, next_camera.translation());
+  if (distance < min_distance || pivot_dot < 0.0f) {
+    next_camera.look_at = -pivot_transformed_direction * min_distance;
+  }
+  return next_camera;
+}
+
 asc::Camera PivotDollyScrollCameraInput::stepCamera(
   const asc::Camera& target_camera, const as::vec2i& cursor_delta,
   int32_t scroll_delta, as::real delta_time)
 {
-  asc::Camera next_camera = target_camera;
-  const auto pivot_direction = as::vec_normalize(pivot_ - target_camera.look_at);
-  next_camera.look_at =
-    target_camera.look_at
-    + pivot_direction * as::real(scroll_delta) * props_.dolly_speed_;
-  auto pivot_dot =
-    as::vec_dot(target_camera.look_at - pivot_, next_camera.look_at - pivot_);
-  auto min_distance = 0.01f;
-  auto min_position = pivot_ - pivot_direction * min_distance;
-  auto distance = as::vec_distance(pivot_, next_camera.look_at);
-  if (distance <= min_distance || pivot_dot < 0.0f) {
-    next_camera.look_at = min_position;
-  }
+  const auto next_camera =
+    Dolly(target_camera, as::real(scroll_delta) * props_.dolly_speed_);
   endActivation();
   return next_camera;
 }
 
-void OrbitDollyScrollCameraInput::handleEvents(const InputEvent& event)
-{
-  if (const auto* scroll = std::get_if<ScrollEvent>(&event)) {
-    beginActivation();
-  }
-}
-
-asc::Camera OrbitDollyScrollCameraInput::stepCamera(
-  const asc::Camera& target_camera, const as::vec2i& cursor_delta,
-  const int32_t scroll_delta, as::real delta_time)
-{
-  asc::Camera next_camera = target_camera;
-  next_camera.look_dist = as::min(
-    next_camera.look_dist + as::real(scroll_delta) * props_.dolly_speed_,
-    0.0_r);
-  endActivation();
-  return next_camera;
-}
-
-void OrbitDollyCursorMoveCameraInput::handleEvents(const InputEvent& event)
+void PivotDollyMotionCameraInput::handleEvents(const InputEvent& event)
 {
   handleEventsCommon(*this, event, button_type_);
 }
 
-asc::Camera OrbitDollyCursorMoveCameraInput::stepCamera(
+asc::Camera PivotDollyMotionCameraInput::stepCamera(
   const asc::Camera& target_camera, const as::vec2i& cursor_delta,
   const int32_t scroll_delta, as::real delta_time)
 {
-  asc::Camera next_camera = target_camera;
-  next_camera.look_dist = as::min(
-    next_camera.look_dist + as::real(cursor_delta.y) * props_.dolly_speed_,
-    0.0_r);
+  const auto next_camera =
+    Dolly(target_camera, as::real(cursor_delta.y) * props_.dolly_speed_);
+  endActivation();
   return next_camera;
 }
 
@@ -560,10 +509,9 @@ asc::Camera smoothCamera(
   camera.yaw = as::mix(target_yaw, current_yaw, look_t);
   const as::real move_rate = exp2(props.move_smoothness_);
   const as::real move_t = exp2(-move_rate * delta_time);
-  camera.look_dist =
-    as::mix(target_camera.look_dist, current_camera.look_dist, move_t);
   camera.look_at =
     as::mix(target_camera.look_at, current_camera.look_at, move_t);
+  camera.pivot = as::mix(target_camera.pivot, current_camera.pivot, move_t);
   return camera;
 }
 
