@@ -368,7 +368,7 @@ asc::Camera OrbitCameraInput::stepCamera(
 
   if (beginning()) {
     next_camera.pivot = pivotFn_();
-    next_camera.look_at = as::affine_inv_transform_pos(
+    next_camera.offset = as::affine_inv_transform_pos(
       next_camera.transform(), target_camera.translation());
   }
 
@@ -382,7 +382,7 @@ asc::Camera OrbitCameraInput::stepCamera(
     orbit_cameras_.reset();
 
     next_camera.pivot = next_camera.translation();
-    next_camera.look_at = as::vec3::zero();
+    next_camera.offset = as::vec3::zero();
   }
 
   return next_camera;
@@ -402,8 +402,8 @@ static asc::Camera Dolly(const asc::Camera& target_camera, const float delta)
     as::vec_normalize(target_camera.pivot - target_camera.translation());
   const auto pivot_transformed_direction = as::vec_normalize(
     as::affine_inv_transform_dir(target_camera.transform(), pivot_direction));
-  next_camera.look_at =
-    target_camera.look_at + pivot_transformed_direction * delta;
+  next_camera.offset =
+    target_camera.offset + pivot_transformed_direction * delta;
   auto pivot_dot = as::vec_dot(
     target_camera.translation() - target_camera.pivot,
     next_camera.translation() - target_camera.pivot);
@@ -411,7 +411,7 @@ static asc::Camera Dolly(const asc::Camera& target_camera, const float delta)
   auto distance =
     as::vec_distance(next_camera.pivot, next_camera.translation());
   if (distance < min_distance || pivot_dot < 0.0f) {
-    next_camera.look_at = -pivot_transformed_direction * min_distance;
+    next_camera.offset = -pivot_transformed_direction * min_distance;
   }
   return next_camera;
 }
@@ -488,8 +488,8 @@ asc::Camera smoothCamera(
   camera.yaw = as::mix(target_yaw, current_yaw, look_t);
   const as::real move_rate = exp2(props.move_smoothness_);
   const as::real move_t = exp2(-move_rate * delta_time);
-  camera.look_at =
-    as::mix(target_camera.look_at, current_camera.look_at, move_t);
+  camera.offset =
+    as::mix(target_camera.offset, current_camera.offset, move_t);
   camera.pivot = as::mix(target_camera.pivot, current_camera.pivot, move_t);
   return camera;
 }

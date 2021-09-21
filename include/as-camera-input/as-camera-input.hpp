@@ -230,7 +230,7 @@ inline void translatePivot(asc::Camera& camera, const as::vec3& delta)
 
 inline void translateOffset(asc::Camera& camera, const as::vec3& delta)
 {
-  camera.look_at += as::affine_inv_transform_dir(camera.transform(), delta);
+  camera.offset += as::affine_inv_transform_dir(camera.transform(), delta);
 }
 
 class PanCameraInput : public CameraInput
