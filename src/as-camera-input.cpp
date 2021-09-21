@@ -453,10 +453,7 @@ asc::Camera PivotDollyMotionCameraInput::stepCamera(
   const asc::Camera& target_camera, const as::vec2i& cursor_delta,
   const int32_t scroll_delta, as::real delta_time)
 {
-  const auto next_camera =
-    Dolly(target_camera, as::real(cursor_delta.y) * props_.dolly_speed_);
-  endActivation();
-  return next_camera;
+  return Dolly(target_camera, as::real(cursor_delta.y) * props_.dolly_speed_);
 }
 
 void ScrollTranslationCameraInput::handleEvents(const InputEvent& event)
