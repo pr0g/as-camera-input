@@ -226,8 +226,10 @@ asc::Camera PanCameraInput::stepCamera(
     return Dir[static_cast<int>(invert)];
   };
 
-  next_camera.look_at += delta_pan_x * inv(props_.pan_invert_x_);
-  next_camera.look_at += delta_pan_y * -inv(props_.pan_invert_y_);
+  next_camera.look_at += as::affine_inv_transform_dir(
+    next_camera.transform(), delta_pan_x * inv(props_.pan_invert_x_));
+  next_camera.look_at += as::affine_inv_transform_dir(
+    next_camera.transform(), delta_pan_y * -inv(props_.pan_invert_y_));
 
   return next_camera;
 }
