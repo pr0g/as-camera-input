@@ -373,6 +373,7 @@ asc::Camera OrbitCameraInput::stepCamera(
   }
 
   if (active()) {
+    next_camera.set_pivot(pivotFn_());
     // todo: need to return nested cameras to idle state when ending
     next_camera = orbit_cameras_.stepCamera(
       next_camera, cursor_delta, scroll_delta, delta_time);
