@@ -191,7 +191,7 @@ asc::Camera RotateCameraInput::stepCamera(
   next_camera.pitch += as::real(cursor_delta[1]) * props_.rotate_speed_;
   next_camera.yaw += as::real(cursor_delta[0]) * props_.rotate_speed_;
 
-  auto clamp_rotation = [](const as::real angle) {
+  const auto clamp_rotation = [](const as::real angle) {
     return std::fmod(angle + as::k_tau, as::k_tau);
   };
 
@@ -368,13 +368,12 @@ asc::Camera OrbitCameraInput::stepCamera(
 
   if (beginning()) {
     next_camera.pivot = pivotFn_();
-    next_camera.offset = as::affine_inv_transform_pos(
-      next_camera.transform(), target_camera.translation());
+    next_camera.offset =
+      as::affine_transform_pos(next_camera.view(), target_camera.translation());
   }
 
   if (active()) {
     asc::move_pivot_detached(next_camera, pivotFn_());
-    // todo: need to return nested cameras to idle state when ending
     next_camera = orbit_cameras_.stepCamera(
       next_camera, cursor_delta, scroll_delta, delta_time);
   }
@@ -402,18 +401,16 @@ static asc::Camera Dolly(const asc::Camera& target_camera, const as::real delta)
   asc::Camera next_camera = target_camera;
   const auto pivot_direction =
     as::vec_normalize(target_camera.pivot - target_camera.translation());
-  const auto pivot_transformed_direction = as::vec_normalize(
-    as::affine_inv_transform_dir(target_camera.transform(), pivot_direction));
-  next_camera.offset =
-    target_camera.offset + pivot_transformed_direction * delta;
-  auto pivot_dot = as::vec_dot(
+  translateOffset(next_camera, pivot_direction * delta);
+  const auto pivot_dot = as::vec_dot(
     target_camera.translation() - target_camera.pivot,
     next_camera.translation() - target_camera.pivot);
-  auto min_distance = 0.01_r;
-  auto distance =
+  const auto min_distance = 0.01_r;
+  const auto distance =
     as::vec_distance(next_camera.pivot, next_camera.translation());
   if (distance < min_distance || pivot_dot < 0.0_r) {
-    next_camera.offset = -pivot_transformed_direction * min_distance;
+    next_camera.offset = as::affine_transform_dir(
+      next_camera.view(), -pivot_direction * min_distance);
   }
   return next_camera;
 }
