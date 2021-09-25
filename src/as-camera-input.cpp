@@ -335,7 +335,7 @@ void TranslateCameraInput::resetImpl()
   boost_ = false;
 }
 
-void OrbitCameraInput::handleEvents(const InputEvent& event)
+void PivotCameraInput::handleEvents(const InputEvent& event)
 {
   if (const auto* keyboard_button = std::get_if<KeyboardButtonEvent>(&event)) {
     if (keyboard_button->button_ == KeyboardButton::LAlt) {
@@ -349,7 +349,7 @@ void OrbitCameraInput::handleEvents(const InputEvent& event)
     }
   }
   if (active()) {
-    orbit_cameras_.handleEvents(event);
+    pivot_cameras_.handleEvents(event);
   }
 }
 
@@ -360,7 +360,7 @@ static as::real intersectPlane(
        / as::vec_dot(direction, as::vec3_from_vec4(plane));
 }
 
-asc::Camera OrbitCameraInput::stepCamera(
+asc::Camera PivotCameraInput::stepCamera(
   const asc::Camera& target_camera, const as::vec2i& cursor_delta,
   const int32_t scroll_delta, as::real delta_time)
 {
@@ -374,12 +374,12 @@ asc::Camera OrbitCameraInput::stepCamera(
 
   if (active()) {
     asc::move_pivot_detached(next_camera, pivotFn_());
-    next_camera = orbit_cameras_.stepCamera(
+    next_camera = pivot_cameras_.stepCamera(
       next_camera, cursor_delta, scroll_delta, delta_time);
   }
 
   if (ending()) {
-    orbit_cameras_.reset();
+    pivot_cameras_.reset();
 
     next_camera.pivot = next_camera.translation();
     next_camera.offset = as::vec3::zero();

@@ -207,7 +207,7 @@ inline PanAxes lookPan(const asc::Camera& camera)
   return {as::mat3_basis_x(orientation), as::mat3_basis_y(orientation)};
 }
 
-inline PanAxes orbitPan(const asc::Camera& camera)
+inline PanAxes pivotPan(const asc::Camera& camera)
 {
   const as::mat3 orientation = camera.rotation();
 
@@ -275,7 +275,7 @@ inline as::mat3 lookTranslation(const asc::Camera& camera)
   return {basis_x, basis_y, basis_z};
 }
 
-inline as::mat3 orbitTranslation(const asc::Camera& camera)
+inline as::mat3 pivotTranslation(const asc::Camera& camera)
 {
   const as::mat3 orientation = camera.rotation();
 
@@ -381,7 +381,7 @@ public:
   } props_;
 };
 
-class OrbitCameraInput : public CameraInput
+class PivotCameraInput : public CameraInput
 {
 public:
   void handleEvents(const InputEvent& event) override;
@@ -390,7 +390,7 @@ public:
     int32_t scroll_delta, as::real delta_time) override;
   bool exclusive() const override { return true; }
 
-  Cameras orbit_cameras_;
+  Cameras pivot_cameras_;
   std::function<as::vec3()> pivotFn_;
 };
 
