@@ -373,7 +373,7 @@ asc::Camera OrbitCameraInput::stepCamera(
   }
 
   if (active()) {
-    next_camera.set_pivot(pivotFn_());
+    asc::move_pivot_detached(next_camera, pivotFn_());
     // todo: need to return nested cameras to idle state when ending
     next_camera = orbit_cameras_.stepCamera(
       next_camera, cursor_delta, scroll_delta, delta_time);
@@ -396,8 +396,9 @@ void PivotDollyScrollCameraInput::handleEvents(const InputEvent& event)
   }
 }
 
-static asc::Camera Dolly(const asc::Camera& target_camera, const float delta)
+static asc::Camera Dolly(const asc::Camera& target_camera, const as::real delta)
 {
+  using as::operator""_r;
   asc::Camera next_camera = target_camera;
   const auto pivot_direction =
     as::vec_normalize(target_camera.pivot - target_camera.translation());
@@ -408,10 +409,10 @@ static asc::Camera Dolly(const asc::Camera& target_camera, const float delta)
   auto pivot_dot = as::vec_dot(
     target_camera.translation() - target_camera.pivot,
     next_camera.translation() - target_camera.pivot);
-  auto min_distance = 0.01f;
+  auto min_distance = 0.01_r;
   auto distance =
     as::vec_distance(next_camera.pivot, next_camera.translation());
-  if (distance < min_distance || pivot_dot < 0.0f) {
+  if (distance < min_distance || pivot_dot < 0.0_r) {
     next_camera.offset = -pivot_transformed_direction * min_distance;
   }
   return next_camera;
@@ -489,8 +490,7 @@ asc::Camera smoothCamera(
   camera.yaw = as::mix(target_yaw, current_yaw, look_t);
   const as::real move_rate = exp2(props.move_smoothness_);
   const as::real move_t = exp2(-move_rate * delta_time);
-  camera.offset =
-    as::mix(target_camera.offset, current_camera.offset, move_t);
+  camera.offset = as::mix(target_camera.offset, current_camera.offset, move_t);
   camera.pivot = as::mix(target_camera.pivot, current_camera.pivot, move_t);
   return camera;
 }

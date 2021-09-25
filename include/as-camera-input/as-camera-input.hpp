@@ -392,12 +392,6 @@ public:
 
   Cameras orbit_cameras_;
   std::function<as::vec3()> pivotFn_;
-
-  struct Props
-  {
-    as::real default_orbit_distance_ = 15.0_r;
-    as::real max_orbit_distance_ = 100.0_r;
-  } props_;
 };
 
 } // namespace asci
