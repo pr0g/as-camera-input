@@ -395,22 +395,19 @@ void PivotDollyScrollCameraInput::handleEvents(const InputEvent& event)
   }
 }
 
-static asc::Camera Dolly(const asc::Camera& target_camera, const as::real delta)
+static asc::Camera PivotDolly(
+  const asc::Camera& target_camera, const as::real delta)
 {
   using as::operator""_r;
   asc::Camera next_camera = target_camera;
-  const auto pivot_direction =
-    as::vec_normalize(target_camera.pivot - target_camera.translation());
-  translateOffset(next_camera, pivot_direction * delta);
-  const auto pivot_dot = as::vec_dot(
-    target_camera.translation() - target_camera.pivot,
-    next_camera.translation() - target_camera.pivot);
+  const auto pivot_direction = as::vec_normalize(target_camera.offset);
+  next_camera.offset -= pivot_direction * delta;
+  const auto pivot_dot = as::vec_dot(target_camera.offset, next_camera.offset);
   const auto min_distance = 0.01_r;
   const auto distance =
-    as::vec_distance(next_camera.pivot, next_camera.translation());
-  if (distance < min_distance || pivot_dot < 0.0_r) {
-    next_camera.offset = as::affine_transform_dir(
-      next_camera.view(), -pivot_direction * min_distance);
+    as::vec_length(next_camera.offset) * as::sign(pivot_dot);
+  if (distance < min_distance) {
+    next_camera.offset = pivot_direction * min_distance;
   }
   return next_camera;
 }
@@ -420,7 +417,7 @@ asc::Camera PivotDollyScrollCameraInput::stepCamera(
   int32_t scroll_delta, as::real delta_time)
 {
   const auto next_camera =
-    Dolly(target_camera, as::real(scroll_delta) * props_.dolly_speed_);
+    PivotDolly(target_camera, as::real(scroll_delta) * props_.dolly_speed_);
   endActivation();
   return next_camera;
 }
@@ -434,7 +431,8 @@ asc::Camera PivotDollyMotionCameraInput::stepCamera(
   const asc::Camera& target_camera, const as::vec2i& cursor_delta,
   const int32_t scroll_delta, as::real delta_time)
 {
-  return Dolly(target_camera, as::real(cursor_delta.y) * props_.dolly_speed_);
+  return PivotDolly(
+    target_camera, as::real(cursor_delta.y) * props_.dolly_speed_);
 }
 
 void ScrollTranslationCameraInput::handleEvents(const InputEvent& event)
