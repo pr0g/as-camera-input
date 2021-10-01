@@ -353,13 +353,6 @@ void PivotCameraInput::handleEvents(const InputEvent& event)
   }
 }
 
-static as::real intersectPlane(
-  const as::vec3& origin, const as::vec3& direction, const as::vec4& plane)
-{
-  return -(as::vec_dot(origin, as::vec3_from_vec4(plane)) + plane.w)
-       / as::vec_dot(direction, as::vec3_from_vec4(plane));
-}
-
 asc::Camera PivotCameraInput::stepCamera(
   const asc::Camera& target_camera, const as::vec2i& cursor_delta,
   const int32_t scroll_delta, as::real delta_time)
