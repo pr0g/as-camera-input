@@ -154,29 +154,31 @@ void RotateCameraInput::handleEvents(const InputEvent& event)
 // https://www.geometrictools.com/Documentation/EulerAngles.pdf
 as::vec3 eulerAngles(const as::mat3& orientation)
 {
-  float x;
-  float y;
-  float z;
+  using as::operator""_r;
+
+  as::real x;
+  as::real y;
+  as::real z;
 
   // 2.4 Factor as RyRzRx
-  if (orientation[as::mat3_rc(1, 0)] < 1.0f) {
-    if (orientation[as::mat3_rc(1, 0)] > -1.0f) {
+  if (orientation[as::mat3_rc(1, 0)] < 1.0_r) {
+    if (orientation[as::mat3_rc(1, 0)] > -1.0_r) {
       x = std::atan2(
         -orientation[as::mat3_rc(1, 2)], orientation[as::mat3_rc(1, 1)]);
       y = std::atan2(
         -orientation[as::mat3_rc(2, 0)], orientation[as::mat3_rc(0, 0)]);
       z = std::asin(orientation[as::mat3_rc(1, 0)]);
     } else {
-      x = 0.0f;
+      x = 0.0_r;
       y = -std::atan2(
         orientation[as::mat3_rc(2, 1)], orientation[as::mat3_rc(2, 2)]);
-      z = -as::k_pi * 0.5f;
+      z = -as::k_pi * 0.5_r;
     }
   } else {
-    x = 0.0f;
+    x = 0.0_r;
     y = std::atan2(
       orientation[as::mat3_rc(2, 1)], orientation[as::mat3_rc(2, 2)]);
-    z = as::k_pi * 0.5f;
+    z = as::k_pi * 0.5_r;
   }
 
   return as::vec3(x, y, z);
@@ -393,15 +395,22 @@ static asc::Camera PivotDolly(
 {
   using as::operator""_r;
   asc::Camera next_camera = target_camera;
-  const auto pivot_direction = as::vec_normalize(target_camera.offset);
+
+  const auto pivot_direction = [&target_camera] {
+    if (const auto offset_length = as::vec_length(target_camera.offset);
+        as::real_near(offset_length, 0.0_r)) {
+      return -as::vec3::axis_z();
+    } else {
+      return target_camera.offset / offset_length;
+    }
+  }();
+
   next_camera.offset -= pivot_direction * delta;
-  const auto pivot_dot = as::vec_dot(target_camera.offset, next_camera.offset);
-  const auto min_distance = 0.01_r;
-  const auto distance =
-    as::vec_length(next_camera.offset) * as::sign(pivot_dot);
-  if (distance < min_distance) {
-    next_camera.offset = pivot_direction * min_distance;
+
+  if (as::vec_dot(pivot_direction, next_camera.offset) < 0.0_r) {
+    next_camera.offset = pivot_direction * 0.001_r;
   }
+
   return next_camera;
 }
 
@@ -411,7 +420,9 @@ asc::Camera PivotDollyScrollCameraInput::stepCamera(
 {
   const auto next_camera =
     PivotDolly(target_camera, as::real(scroll_delta) * props_.dolly_speed_);
+
   endActivation();
+
   return next_camera;
 }
 
