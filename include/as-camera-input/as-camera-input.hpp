@@ -394,6 +394,39 @@ public:
   std::function<as::vec3()> pivotFn_;
 };
 
+inline as::vec3 focusLook(as::real)
+{
+  return as::vec3::zero();
+}
+
+inline as::vec3 focusPivot(const as::real length)
+{
+  return as::vec3::axis_z(-length);
+}
+
+class FocusCameraInput : public CameraInput
+{
+public:
+  FocusCameraInput(
+    const KeyboardButton keyboard_button,
+    const std::function<as::vec3(as::real)>& offsetFn)
+    : keyboard_button_(keyboard_button), offsetFn_(offsetFn)
+  {
+  }
+
+  std::function<as::vec3()> pivotFn_;
+
+  void handleEvents(const InputEvent& event) override;
+  asc::Camera stepCamera(
+    const asc::Camera& target_camera, const as::vec2i& cursor_delta,
+    int32_t scroll_delta, as::real delta_time) override;
+
+private:
+  asc::Camera next_camera_;
+  KeyboardButton keyboard_button_;
+  std::function<as::vec3(as::real)> offsetFn_;
+};
+
 class CustomCameraInput : public CameraInput
 {
 public:

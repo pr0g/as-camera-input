@@ -494,6 +494,44 @@ asc::Camera smoothCamera(
   return camera;
 }
 
+void FocusCameraInput::handleEvents(const InputEvent& event)
+{
+  if (
+    const auto& keyboard_button =
+      std::get_if<asci::KeyboardButtonEvent>(&event)) {
+    if (
+      keyboard_button->button_ == keyboard_button_
+      && keyboard_button->action_ == asci::ButtonAction::Down) {
+      beginActivation();
+    }
+  }
+}
+
+asc::Camera FocusCameraInput::stepCamera(
+  const asc::Camera& target_camera, const as::vec2i& cursor_delta,
+  int32_t scroll_delta, as::real delta_time)
+{
+  if (beginning()) {
+    auto [forward, length] =
+      as::vec_normalize_and_length(pivotFn_() - target_camera.translation());
+    next_camera_.offset = offsetFn_(length);
+    as::vec3 right, up;
+    as::vec3_right_and_up_lh(forward, right, up);
+    auto angles = asci::eulerAngles(as::mat3(right, up, forward));
+    next_camera_.pitch = angles.x;
+    next_camera_.yaw = angles.y;
+    next_camera_.pivot = target_camera.pivot;
+  }
+
+  if (
+    as::real_near(target_camera.pitch, next_camera_.pitch)
+    && as::real_near(target_camera.yaw, next_camera_.yaw)) {
+    endActivation();
+  }
+
+  return next_camera_;
+}
+
 void CustomCameraInput::handleEvents(const InputEvent& event)
 {
   m_handleEventsFn(*this, event);
@@ -503,7 +541,8 @@ asc::Camera CustomCameraInput::stepCamera(
   const asc::Camera& target_camera, const as::vec2i& cursor_delta,
   int32_t scroll_delta, as::real delta_time)
 {
-  return m_stepCameraFn(*this, target_camera, cursor_delta, scroll_delta, delta_time);
+  return m_stepCameraFn(
+    *this, target_camera, cursor_delta, scroll_delta, delta_time);
 }
 
 } // namespace asci
