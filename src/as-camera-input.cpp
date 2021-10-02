@@ -494,4 +494,16 @@ asc::Camera smoothCamera(
   return camera;
 }
 
+void CustomCameraInput::handleEvents(const InputEvent& event)
+{
+  m_handleEventsFn(*this, event);
+}
+
+asc::Camera CustomCameraInput::stepCamera(
+  const asc::Camera& target_camera, const as::vec2i& cursor_delta,
+  int32_t scroll_delta, as::real delta_time)
+{
+  return m_stepCameraFn(*this, target_camera, cursor_delta, scroll_delta, delta_time);
+}
+
 } // namespace asci

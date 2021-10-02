@@ -394,4 +394,18 @@ public:
   std::function<as::vec3()> pivotFn_;
 };
 
+class CustomCameraInput : public CameraInput
+{
+public:
+  void handleEvents(const InputEvent& event) override;
+  asc::Camera stepCamera(
+    const asc::Camera& target_camera, const as::vec2i& cursor_delta,
+    int32_t scroll_delta, as::real delta_time) override;
+
+  std::function<void(CameraInput&, const InputEvent&)> m_handleEventsFn;
+  std::function<asc::Camera(
+    CameraInput&, const asc::Camera&, const as::vec2i&, int32_t, as::real)>
+    m_stepCameraFn;
+};
+
 } // namespace asci
