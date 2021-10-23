@@ -125,6 +125,7 @@ public:
     const asc::Camera& target_camera, const as::vec2i& cursor_delta,
     int32_t scroll_delta, as::real delta_time) = 0;
   virtual bool exclusive() const { return false; }
+  virtual int64_t priority() const { return 0; }
 
 protected:
   virtual void resetImpl() {}
@@ -420,6 +421,7 @@ public:
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& cursor_delta,
     int32_t scroll_delta, as::real delta_time) override;
+  int64_t priority() const override { return 10; }
 
 private:
   asc::Camera next_camera_;

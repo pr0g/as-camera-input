@@ -97,6 +97,12 @@ asc::Camera Cameras::stepCamera(
     }
   }
 
+  std::sort(
+    active_camera_inputs_.begin(), active_camera_inputs_.end(),
+    [](const CameraInput* lhs, const CameraInput* rhs) {
+      return lhs->priority() < rhs->priority();
+    });
+
   // accumulate
   asc::Camera next_camera = target_camera;
   for (auto* camera_input : active_camera_inputs_) {
