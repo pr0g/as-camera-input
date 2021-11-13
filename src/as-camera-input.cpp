@@ -166,25 +166,25 @@ as::vec3 eulerAngles(const as::mat3& orientation)
   as::real y;
   as::real z;
 
-  // 2.4 Factor as RyRzRx
-  if (orientation[as::mat3_rc(1, 0)] < 1.0_r) {
-    if (orientation[as::mat3_rc(1, 0)] > -1.0_r) {
-      x = std::atan2(
-        -orientation[as::mat3_rc(1, 2)], orientation[as::mat3_rc(1, 1)]);
+  // 2.3 Factor as RyRxRz
+  if (orientation[as::mat3_rc(1, 2)] < 1.0_r) {
+    if (orientation[as::mat3_rc(1, 2)] > -1.0_r) {
+      x = std::asin(-orientation[as::mat3_rc(1, 2)]);
       y = std::atan2(
-        -orientation[as::mat3_rc(2, 0)], orientation[as::mat3_rc(0, 0)]);
-      z = std::asin(orientation[as::mat3_rc(1, 0)]);
+        orientation[as::mat3_rc(0, 2)], orientation[as::mat3_rc(2, 2)]);
+      z = std::atan2(
+        orientation[as::mat3_rc(1, 0)], orientation[as::mat3_rc(1, 1)]);
     } else {
-      x = 0.0_r;
+      x = as::k_pi * 0.5_r;
       y = -std::atan2(
-        orientation[as::mat3_rc(2, 1)], orientation[as::mat3_rc(2, 2)]);
-      z = -as::k_pi * 0.5_r;
+        -orientation[as::mat3_rc(0, 1)], orientation[as::mat3_rc(0, 0)]);
+      z = 0.0_r;
     }
   } else {
-    x = 0.0_r;
+    x = -as::k_pi * 0.5_r;
     y = std::atan2(
-      orientation[as::mat3_rc(2, 1)], orientation[as::mat3_rc(2, 2)]);
-    z = as::k_pi * 0.5_r;
+      -orientation[as::mat3_rc(0, 1)], orientation[as::mat3_rc(0, 0)]);
+    z = 0.0_r;
   }
 
   return as::vec3(x, y, z);
