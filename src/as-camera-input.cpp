@@ -204,9 +204,11 @@ asc::Camera RotateCameraInput::stepCamera(
   };
 
   next_camera.yaw = clamp_rotation(next_camera.yaw);
-  // clamp pitch to be +-90 degrees
-  next_camera.pitch =
-    as::clamp(next_camera.pitch, -as::k_pi * 0.5_r, as::k_pi * 0.5_r);
+  if (constrain_pitch_()) {
+    // clamp pitch to be +-90 degrees
+    next_camera.pitch =
+      as::clamp(next_camera.pitch, -as::k_pi * 0.5_r, as::k_pi * 0.5_r);
+  }
 
   return next_camera;
 }
@@ -482,8 +484,8 @@ asc::Camera smoothCamera(
   const as::real current_yaw = clamp_rotation(current_camera.yaw);
 
   // ensure smooth transition when moving across 0 - 360 boundary
-  const as::real yaw_delta = target_yaw - current_yaw;
-  if (std::abs(yaw_delta) >= as::k_pi) {
+  if (const as::real yaw_delta = target_yaw - current_yaw;
+      std::abs(yaw_delta) >= as::k_pi) {
     target_yaw -= as::k_tau * as::sign(yaw_delta);
   }
 

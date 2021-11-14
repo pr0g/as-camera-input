@@ -187,6 +187,7 @@ public:
     int32_t scroll_delta, as::real delta_time) override;
 
   MouseButton button_type_;
+  std::function<bool()> constrain_pitch_ = []() { return true; };
 
   struct Props
   {
