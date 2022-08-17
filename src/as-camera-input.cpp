@@ -38,7 +38,7 @@ void CameraSystem::handleEvents(const InputEvent& event)
 }
 
 asc::Camera CameraSystem::stepCamera(
-  const asc::Camera& target_camera, as::real delta_time)
+  const asc::Camera& target_camera, const as::real delta_time)
 {
   const auto cursor_delta =
     current_cursor_position_.has_value() && last_cursor_position_.has_value()
@@ -75,7 +75,7 @@ void Cameras::handleEvents(const InputEvent& event)
 
 asc::Camera Cameras::stepCamera(
   const asc::Camera& target_camera, const as::vec2i& cursor_delta,
-  int32_t scroll_delta, const as::real delta_time)
+  const int32_t scroll_delta, const as::real delta_time)
 {
   for (int i = 0; i < idle_camera_inputs_.size();) {
     auto* camera_input = idle_camera_inputs_[i];
@@ -139,7 +139,8 @@ void Cameras::reset()
 }
 
 static void handleEventsCommon(
-  CameraInput& cameraInput, const InputEvent& event, MouseButton button_type)
+  CameraInput& cameraInput, const InputEvent& event,
+  const MouseButton button_type)
 {
   if (const auto& mouse_button = std::get_if<MouseButtonEvent>(&event)) {
     if (mouse_button->button_ == button_type) {
@@ -365,7 +366,7 @@ void PivotCameraInput::handleEvents(const InputEvent& event)
 
 asc::Camera PivotCameraInput::stepCamera(
   const asc::Camera& target_camera, const as::vec2i& cursor_delta,
-  const int32_t scroll_delta, as::real delta_time)
+  const int32_t scroll_delta, const as::real delta_time)
 {
   asc::Camera next_camera = target_camera;
 
@@ -424,7 +425,7 @@ static asc::Camera PivotDolly(
 
 asc::Camera PivotDollyScrollCameraInput::stepCamera(
   const asc::Camera& target_camera, const as::vec2i& cursor_delta,
-  int32_t scroll_delta, as::real delta_time)
+  const int32_t scroll_delta, const as::real delta_time)
 {
   const auto next_camera =
     PivotDolly(target_camera, as::real(scroll_delta) * props_.dolly_speed_);
@@ -441,7 +442,7 @@ void PivotDollyMotionCameraInput::handleEvents(const InputEvent& event)
 
 asc::Camera PivotDollyMotionCameraInput::stepCamera(
   const asc::Camera& target_camera, const as::vec2i& cursor_delta,
-  const int32_t scroll_delta, as::real delta_time)
+  const int32_t scroll_delta, const as::real delta_time)
 {
   return PivotDolly(
     target_camera, as::real(cursor_delta.y) * props_.dolly_speed_);
@@ -456,7 +457,7 @@ void ScrollTranslationCameraInput::handleEvents(const InputEvent& event)
 
 asc::Camera ScrollTranslationCameraInput::stepCamera(
   const asc::Camera& target_camera, const as::vec2i& cursor_delta,
-  int32_t scroll_delta, as::real delta_time)
+  const int32_t scroll_delta, const as::real delta_time)
 {
   asc::Camera next_camera = target_camera;
 
@@ -517,7 +518,7 @@ void FocusCameraInput::handleEvents(const InputEvent& event)
 
 asc::Camera FocusCameraInput::stepCamera(
   const asc::Camera& target_camera, const as::vec2i& cursor_delta,
-  int32_t scroll_delta, as::real delta_time)
+  const int32_t scroll_delta, const as::real delta_time)
 {
   if (beginning()) {
     auto [forward, length] =
@@ -547,7 +548,7 @@ void CustomCameraInput::handleEvents(const InputEvent& event)
 
 asc::Camera CustomCameraInput::stepCamera(
   const asc::Camera& target_camera, const as::vec2i& cursor_delta,
-  int32_t scroll_delta, as::real delta_time)
+  const int32_t scroll_delta, const as::real delta_time)
 {
   return m_stepCameraFn(
     *this, target_camera, cursor_delta, scroll_delta, delta_time);
