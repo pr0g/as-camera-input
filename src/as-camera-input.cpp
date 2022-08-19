@@ -448,6 +448,14 @@ asc::Camera PivotDollyMotionCameraInput::stepCamera(
     target_camera, as::real(cursor_delta.y) * props_.dolly_speed_);
 }
 
+ScrollTranslationCameraInput::ScrollTranslationCameraInput()
+{
+  // default scroll axis is camera forward vector
+  scroll_translation_axis_fn_ = [](const asc::Camera& next_camera) {
+    return as::mat3_basis_z(lookTranslation(next_camera));
+  };
+}
+
 void ScrollTranslationCameraInput::handleEvents(const InputEvent& event)
 {
   if (const auto* scroll = std::get_if<ScrollEvent>(&event)) {
@@ -462,14 +470,20 @@ asc::Camera ScrollTranslationCameraInput::stepCamera(
   asc::Camera next_camera = target_camera;
 
   const auto translation_basis = lookTranslation(next_camera);
-  const auto axis_z = as::mat3_basis_z(translation_basis);
+  const auto scroll_axis = scroll_translation_axis_fn_(next_camera);
 
   next_camera.pivot +=
-    axis_z * as::real(scroll_delta) * props_.translate_speed_;
+    scroll_axis * as::real(scroll_delta) * props_.translate_speed_;
 
   endActivation();
 
   return next_camera;
+}
+
+void ScrollTranslationCameraInput::setScrollAxisFn(
+  ScrollTranslationAxisFn scroll_translation_axis_fn)
+{
+  scroll_translation_axis_fn_ = std::move(scroll_translation_axis_fn);
 }
 
 asc::Camera smoothCamera(

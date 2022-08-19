@@ -245,6 +245,7 @@ public:
       translationDeltaFn_(translationDeltaFn)
   {
   }
+
   void handleEvents(const InputEvent& event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& cursor_delta,
@@ -300,6 +301,7 @@ public:
       translationDeltaFn_(std::move(translationDeltaFn))
   {
   }
+
   void handleEvents(const InputEvent& event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& cursor_delta,
@@ -369,18 +371,28 @@ public:
   } props_;
 };
 
+using ScrollTranslationAxisFn =
+  std::function<as::vec3(const asc::Camera& camera)>;
+
 class ScrollTranslationCameraInput : public CameraInput
 {
 public:
+  ScrollTranslationCameraInput();
+
   void handleEvents(const InputEvent& event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& cursor_delta,
     int32_t scroll_delta, as::real delta_time) override;
 
+  void setScrollAxisFn(ScrollTranslationAxisFn scroll_translation_axis_fn);
+
   struct Props
   {
     as::real translate_speed_ = 0.2_r;
   } props_;
+
+private:
+  ScrollTranslationAxisFn scroll_translation_axis_fn_;
 };
 
 class PivotCameraInput : public CameraInput
