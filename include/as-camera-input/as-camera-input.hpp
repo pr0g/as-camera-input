@@ -26,7 +26,7 @@ struct ScrollEvent
 
 enum class MouseButton
 {
-  Nil,
+  Unset,
   Left,
   Right,
   Middle
@@ -63,7 +63,7 @@ enum class KeyboardButton
   LAlt,
   LShift,
   Ctrl,
-  Nil
+  Unset
 };
 
 enum class ButtonAction
@@ -318,7 +318,7 @@ private:
   enum class TranslationType
   {
     // clang-format off
-    Nil     = 0,
+    Unset     = 0,
     Forward  = 1 << 0,
     Backward = 1 << 1,
     Left     = 1 << 2,
@@ -330,7 +330,7 @@ private:
 
   static TranslationType translationFromKey(KeyboardButton button);
 
-  TranslationType translation_ = TranslationType::Nil;
+  TranslationType translation_ = TranslationType::Unset;
   TranslationAxesFn translationAxesFn_;
   TranslationDeltaFn translationDeltaFn_;
   bool boost_ = false;

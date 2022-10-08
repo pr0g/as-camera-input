@@ -260,7 +260,7 @@ TranslateCameraInput::TranslationType TranslateCameraInput::translationFromKey(
     case KeyboardButton::E:
       return TranslationType::Up;
     default:
-      return TranslationType::Nil;
+      return TranslationType::Unset;
   }
 }
 
@@ -273,7 +273,7 @@ void TranslateCameraInput::handleEvents(const InputEvent& event)
       }
       using bec::operator|=;
       translation_ |= translationFromKey(keyboard_button->button_);
-      if (translation_ != TranslationType::Nil) {
+      if (translation_ != TranslationType::Unset) {
         beginActivation();
       }
       if (keyboard_button->button_ == KeyboardButton::LShift) {
@@ -282,7 +282,7 @@ void TranslateCameraInput::handleEvents(const InputEvent& event)
     } else if (keyboard_button->action_ == ButtonAction::Up) {
       using bec::operator^=;
       translation_ ^= translationFromKey(keyboard_button->button_);
-      if (translation_ == TranslationType::Nil) {
+      if (translation_ == TranslationType::Unset) {
         endActivation();
       }
       if (keyboard_button->button_ == KeyboardButton::LShift) {
@@ -334,7 +334,7 @@ asc::Camera TranslateCameraInput::stepCamera(
   }
 
   if (ending()) {
-    translation_ = TranslationType::Nil;
+    translation_ = TranslationType::Unset;
   }
 
   return next_camera;
@@ -342,7 +342,7 @@ asc::Camera TranslateCameraInput::stepCamera(
 
 void TranslateCameraInput::resetImpl()
 {
-  translation_ = TranslationType::Nil;
+  translation_ = TranslationType::Unset;
   boost_ = false;
 }
 
