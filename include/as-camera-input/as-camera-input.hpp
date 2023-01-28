@@ -91,6 +91,12 @@ using InputEvent = std::variant<
 
 as::vec3 eulerAngles(const as::mat3& orientation);
 
+// wraps rotation between 0-360 degrees (0-2pi radians)
+inline as::real wrapRotation(const as::real angle)
+{
+  return std::fmod(angle + as::k_tau, as::k_tau);
+}
+
 class CameraInput
 {
 public:
@@ -148,6 +154,7 @@ class Cameras
 {
 public:
   void addCamera(CameraInput* camera_input);
+  void removeCamera(CameraInput* camera_input);
   void handleEvents(const InputEvent& event);
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& cursor_delta,
@@ -172,6 +179,11 @@ private:
   std::optional<as::vec2i> last_cursor_position_;
   std::optional<as::vec2i> current_cursor_position_;
 };
+
+// simple handle event implementation that will begin/end a camera input when
+// the mouse button specified goes down (begin) or up (end)
+void handleEventsCommon(
+  CameraInput& cameraInput, const InputEvent& event, MouseButton button_type);
 
 class RotateCameraInput : public CameraInput
 {
@@ -271,7 +283,11 @@ inline as::mat3 lookTranslation(const asc::Camera& camera)
 {
   const as::mat3 orientation = camera.rotation();
 
-  const auto basis_x = as::mat3_basis_x(orientation);
+  // always move parallel with x/z plane, regardless of roll
+  const auto basis_x = [&orientation] {
+    const auto side = as::mat3_basis_x(orientation);
+    return as::vec_normalize(as::vec3(side.x, 0.0f, side.z));
+  }();
   const auto basis_y = as::vec3::axis_y();
   const auto basis_z = as::mat3_basis_z(orientation);
 

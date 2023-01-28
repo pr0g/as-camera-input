@@ -62,6 +62,15 @@ void Cameras::addCamera(CameraInput* camera_input)
   idle_camera_inputs_.push_back(camera_input);
 }
 
+void Cameras::removeCamera(CameraInput* camera_input)
+{
+  if (auto camera_it = std::find(
+        idle_camera_inputs_.begin(), idle_camera_inputs_.end(), camera_input);
+      camera_it != idle_camera_inputs_.end()) {
+    idle_camera_inputs_.erase(camera_it);
+  }
+}
+
 void Cameras::handleEvents(const InputEvent& event)
 {
   for (auto* camera_input : active_camera_inputs_) {
@@ -138,7 +147,7 @@ void Cameras::reset()
   }
 }
 
-static void handleEventsCommon(
+void handleEventsCommon(
   CameraInput& cameraInput, const InputEvent& event,
   const MouseButton button_type)
 {
@@ -200,11 +209,9 @@ asc::Camera RotateCameraInput::stepCamera(
   next_camera.pitch += as::real(cursor_delta[1]) * props_.rotate_speed_;
   next_camera.yaw += as::real(cursor_delta[0]) * props_.rotate_speed_;
 
-  const auto clamp_rotation = [](const as::real angle) {
-    return std::fmod(angle + as::k_tau, as::k_tau);
-  };
+  next_camera.pitch = wrapRotation(next_camera.pitch);
+  next_camera.yaw = wrapRotation(next_camera.yaw);
 
-  next_camera.yaw = clamp_rotation(next_camera.yaw);
   if (constrain_pitch_()) {
     // clamp pitch to be +-90 degrees
     next_camera.pitch =
@@ -490,25 +497,30 @@ asc::Camera smoothCamera(
   const asc::Camera& current_camera, const asc::Camera& target_camera,
   const SmoothProps& props, const as::real delta_time)
 {
-  const auto clamp_rotation = [](const as::real angle) {
-    return std::fmod(angle + as::k_tau, as::k_tau);
+  const auto wrap_values = [](const as::real current, const as::real target) {
+    as::real wrapped_target = wrapRotation(target);
+    const as::real wrapped_current = wrapRotation(current);
+    // ensure smooth transition when moving across 0-360 degree boundary
+    if (const as::real delta = wrapped_target - wrapped_current;
+        std::abs(delta) >= as::k_pi) {
+      wrapped_target -= as::k_tau * as::sign(delta);
+    }
+    return std::pair(wrapped_current, wrapped_target);
   };
 
-  // keep yaw in 0 - 360 range
-  as::real target_yaw = clamp_rotation(target_camera.yaw);
-  const as::real current_yaw = clamp_rotation(current_camera.yaw);
-
-  // ensure smooth transition when moving across 0 - 360 boundary
-  if (const as::real yaw_delta = target_yaw - current_yaw;
-      std::abs(yaw_delta) >= as::k_pi) {
-    target_yaw -= as::k_tau * as::sign(yaw_delta);
-  }
+  const auto [current_roll, target_roll] =
+    wrap_values(target_camera.roll, current_camera.roll);
+  const auto [current_pitch, target_pitch] =
+    wrap_values(target_camera.pitch, current_camera.pitch);
+  const auto [current_yaw, target_yaw] =
+    wrap_values(target_camera.yaw, current_camera.yaw);
 
   asc::Camera camera;
   // https://www.gamasutra.com/blogs/ScottLembcke/20180404/316046/Improved_Lerp_Smoothing.php
   const as::real look_rate = exp2(props.look_smoothness_);
   const as::real look_t = exp2(-look_rate * delta_time);
-  camera.pitch = as::mix(target_camera.pitch, current_camera.pitch, look_t);
+  camera.roll = as::mix(target_roll, current_roll, look_t);
+  camera.pitch = as::mix(target_pitch, current_pitch, look_t);
   camera.yaw = as::mix(target_yaw, current_yaw, look_t);
   const as::real move_rate = exp2(props.move_smoothness_);
   const as::real move_t = exp2(-move_rate * delta_time);
