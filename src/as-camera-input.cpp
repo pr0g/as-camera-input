@@ -213,9 +213,18 @@ asc::Camera RotateCameraInput::stepCamera(
   next_camera.yaw = wrapRotation(next_camera.yaw);
 
   if (constrain_pitch_()) {
-    // clamp pitch to be +-90 degrees
-    next_camera.pitch =
-      as::clamp(next_camera.pitch, -as::k_pi * 0.5_r, as::k_pi * 0.5_r);
+    // handle clamping range from 270 degrees to 90 degrees
+    // (equivalent to -90 degrees to +90 degrees without wrapping between 0 and
+    // 360 degrees)
+    next_camera.pitch = [](as::real angle) {
+      if (angle > as::k_half_pi && angle <= as::k_pi) {
+        return std::min(angle, as::k_half_pi);
+      } else if (angle < as::k_pi + as::k_half_pi && angle >= as::k_pi) {
+        return std::max(angle, as::k_pi + as::k_half_pi);
+      } else {
+        return angle;
+      }
+    }(next_camera.pitch);
   }
 
   return next_camera;
