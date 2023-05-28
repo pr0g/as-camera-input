@@ -253,7 +253,7 @@ public:
   PanCameraInput(
     const MouseButton button_type, PanAxesFn panAxesFn,
     TranslationDeltaFn translationDeltaFn)
-    : panAxesFn_(std::move(panAxesFn)), button_type_(button_type),
+    : button_type_(button_type), panAxesFn_(std::move(panAxesFn)),
       translationDeltaFn_(translationDeltaFn)
   {
   }
