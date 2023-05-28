@@ -35,6 +35,7 @@ target_compile_definitions(
           $<$<BOOL:${AS_PRECISION_DOUBLE}>:AS_PRECISION_DOUBLE>
           $<$<BOOL:${AS_COL_MAJOR}>:AS_COL_MAJOR>
           $<$<BOOL:${AS_ROW_MAJOR}>:AS_ROW_MAJOR>)
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
 
 include(thh-install)
 thh_install_static_with_dependencies(${PROJECT_NAME} as-camera-input)
