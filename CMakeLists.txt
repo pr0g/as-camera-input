@@ -6,7 +6,7 @@ include(FetchContent)
 FetchContent_Declare(
   as-camera
   GIT_REPOSITORY https://github.com/pr0g/as-camera.git
-  GIT_TAG bbd983435a8eebc207767867c89489b17f6095f0)
+  GIT_TAG 88966df4e561eee585627cf1d1bf4ec660d749cb)
 FetchContent_Declare(
   bec
   GIT_REPOSITORY https://github.com/pr0g/Bit-Field-Enum-Class.git
